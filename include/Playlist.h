@@ -1,7 +1,7 @@
 #ifndef PLAYLIST_H
 #define PLAYLIST_H
 
-#include "PlaylistUtils.h"
+#include "PlaylistCommon.h"
 
 #include "pimpl.h"
 
@@ -10,7 +10,7 @@
 
 namespace pu {
 
-class Song {
+class PU_API Song {
 public:
   Song(const Song& other)
     : mPath(other.mPath), mArtist(other.mArtist), mTitle(other.mTitle) { }
@@ -29,7 +29,7 @@ protected:
   std::string mPath, mArtist, mTitle;
 };
 
-class Playlist {
+class PU_API Playlist {
 public:
   Playlist();
   ~Playlist();

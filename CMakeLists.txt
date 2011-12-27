@@ -82,6 +82,7 @@ endif()
 set(TICPP_LIB ticpp)
 
 include_directories(${PU_SOURCE_DIR}/include)
+include_directories(${PU_SOURCE_DIR}/common)
 
 add_subdirectory(src)
 add_subdirectory(external/ticpp)

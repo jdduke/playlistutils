@@ -77,4 +77,3 @@ Song* Playlist::end() {
 const Song* Playlist::end() const {
   return m->end();
 }
-

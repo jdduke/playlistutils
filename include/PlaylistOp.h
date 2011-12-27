@@ -1,6 +1,7 @@
 #ifndef PLAYLIST_OP_H
 #define PLAYLIST_OP_H
 
+#include "PlaylistCommon.h"
 #include "Playlist.h"
 
 namespace pu {
@@ -8,32 +9,32 @@ namespace pu {
 class Playlist;
 class Song;
 
-class ConstSongOp {
+class PU_API ConstSongOp {
 public:
   virtual ~SongOp() { }
   virtual void operator()( const Song& ) const = 0;
 };
 
-class SongOp {
+class PU_API SongOp {
 public:
   virtual ~SongOp() { }
   virtual void operator()( Song& ) = 0;
 };
 
-class Const PlaylistOp {
+class PU_API ConstPlaylistOp {
 public:
   virtual ~PlaylistOp() { }
   virtual void operator()( const Playlist& ) const = 0;
 };
 
-class PlaylistOp {
+class PU_API PlaylistOp {
 public:
   virtual ~PlaylistOp() { }
   virtual void operator()( Playlist& ) = 0;
 };
 
 template< class SongOp >
-class PlaylistSongOp : public PlaylistOp {
+class PU_API PlaylistSongOp : public PlaylistOp {
 public:
   PlaylistSongOp( SongOp& op ) : mOp( op ) { }
   void operator()( Playlist& p ) {
@@ -46,7 +47,7 @@ private:
 }
 
 template< class SongOp >
-class ConstPlaylistSongOp : public ConstPlaylistOp {
+class PU_API ConstPlaylistSongOp : public ConstPlaylistOp {
 public:
   ConstPlaylistSongOp( ConstSongOp& op ) : mOp( op ) { }
   void operator()( const Playlist& p ) {
