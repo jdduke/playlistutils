@@ -29,6 +29,14 @@ protected:
   std::string mPath, mArtist, mTitle;
 };
 
+class SongComparator {
+public:
+  virtual ~SongComparator() { }
+  virtual bool operator()( const Song& song1, const Song& song2 ) const {
+    return std::strcmp( song1.title(), song2.title() ) < 0;
+  }
+};
+
 class PU_API Playlist {
 public:
   Playlist();
@@ -42,10 +50,18 @@ public:
   const Song& song(size_t index) const;
 
   template<class Op> void apply( const Op& op ) const {
-    std::for_each( begin(), end(), op);
+    op( begin(), end() );
   }
 
   template<class Op> void apply( Op& op ) {
+    op( begin(), end() );
+  }
+
+  template<class Op> void applyOp( const Op& op ) const {
+    std::for_each( begin(), end(), op);
+  }
+
+  template<class Op> void applyOp( Op& op ) {
     std::for_each( begin(), end(), op);
   }
 

@@ -70,7 +70,7 @@ private:
     mPath = path(dir, name);
   }
 
-  bool invalidate() {
+  void invalidate() {
     set("", "");
   }
 

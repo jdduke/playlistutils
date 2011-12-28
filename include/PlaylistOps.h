@@ -3,17 +3,17 @@
 
 #include "PlaylistCommon.h"
 #include "PlaylistOp.h"
-#include "PlaylistFileUtils.h"
 
 namespace pu {
 
+class File;
+class FileTraits;
 class Playlist;
 class Song;
 
-
 class PU_API CopySongOp : public ConstSongOp {
 public:
-  CopySongOp( const char* destDir, const FileTraits& traits, const SongOpListener& listener = SongOpListener() );
+  CopySongOp( const char* destDir, const FileTraits& traits, const OpListener& listener = OpListener() );
 
   virtual bool operator()( const Song& song ) const;
 
@@ -23,13 +23,14 @@ private:
 
   std::string mDestDir;
   const FileTraits& mTraits;
-  SongOpListener mListener;
+  OpListener mListener;
 };
 
+///////////////////////////////////////////////////////////////////////////
 
 class PU_API MoveSongOp : public SongOp {
 public:
-  MoveSongOp( const char* destDir, const FileTraits& traits, const SongOpListener& listener = SongOpListener() );
+  MoveSongOp( const char* destDir, const FileTraits& traits, const OpListener& listener = OpListener() );
 
   virtual bool operator()( const Song& song );
 
@@ -39,13 +40,14 @@ private:
 
   std::string mDestDir;
   const FileTraits& mTraits;
-  SongOpListener mListener;
+  OpListener mListener;
 };
 
+///////////////////////////////////////////////////////////////////////////
 
 class PU_API DeleteSongOp : public SongOp {
 public:
-  DeleteSongOp( const FileTraits& traits, const SongOpListener& listener = SongOpListener() );
+  DeleteSongOp( const FileTraits& traits, const OpListener& listener = OpListener() );
 
   virtual bool operator()( const Song& song );
 
@@ -54,8 +56,23 @@ private:
   inline std::string opName( const File& file ) const;
 
   const FileTraits& mTraits;
-  SongOpListener mListener;
+  OpListener mListener;
 };
+
+///////////////////////////////////////////////////////////////////////////
+
+class PU_API SortSongsOp : public SongsOp {
+public:
+  SortSongsOp( const SongComparator& compare = SongComparator(),  const OpListener& listener = OpListener() );
+
+  virtual bool operator()( Song* first, Song* last );
+
+private:
+  SongComparator mCompare;
+  OpListener     mListener;
+};
+
+///////////////////////////////////////////////////////////////////////////
 
 }
 
