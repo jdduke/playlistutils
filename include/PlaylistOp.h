@@ -9,28 +9,35 @@ namespace pu {
 class Playlist;
 class Song;
 
+class PU_API SongOpListener {
+public:
+  virtual ~SongOpListener() { }
+  virtual void beginOp(const char* opName) const { }
+  virtual void endOp(bool success) const { }
+};
+
 class PU_API ConstSongOp {
 public:
-  virtual ~SongOp() { }
-  virtual void operator()( const Song& ) const = 0;
+  virtual ~ConstSongOp() { }
+  virtual bool operator()( const Song& ) const = 0;
 };
 
 class PU_API SongOp {
 public:
   virtual ~SongOp() { }
-  virtual void operator()( Song& ) = 0;
+  virtual bool operator()( Song& ) = 0;
 };
 
 class PU_API ConstPlaylistOp {
 public:
-  virtual ~PlaylistOp() { }
-  virtual void operator()( const Playlist& ) const = 0;
+  virtual ~ConstPlaylistOp() { }
+  virtual bool operator()( const Playlist& ) const = 0;
 };
 
 class PU_API PlaylistOp {
 public:
   virtual ~PlaylistOp() { }
-  virtual void operator()( Playlist& ) = 0;
+  virtual bool operator()( Playlist& ) = 0;
 };
 
 template< class SongOp >
@@ -43,8 +50,9 @@ public:
 
 private:
   DISALLOW_COPY_AND_ASSIGN(PlaylistSongOp);
-  SongOp& mOp;
-}
+  SongOp mOp;
+  SongOpListener mOpListener;
+};
 
 template< class SongOp >
 class PU_API ConstPlaylistSongOp : public ConstPlaylistOp {
@@ -56,8 +64,9 @@ public:
 
 private:
   DISALLOW_COPY_AND_ASSIGN(ConstPlaylistSongOp);
-  const SongOp& mOp;
-}
+  const SongOp mOp;
+  const SongOpListener mOpListener;
+};
 
 }
 

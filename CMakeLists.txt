@@ -3,6 +3,16 @@ project(PU)
 
 set(CMAKE_DEBUG_POSTFIX "d")
 
+find_package(Qt4 REQUIRED)
+
+#find_package(Boost COMPONENTS filesystem)
+#if(NOT BOOST_FOUND)
+#  set(BOOST_ROOT "$ENV{BOOST_DIR}/boost_1_48_0")
+#  find_package(Boost COMPONENTS filesystem REQUIRED)
+#endif()
+#include_directories(${BOOST_INCLUDE_DIR})
+#add_definitions( "-DHAS_BOOST" )
+
 # Treat warnings as errors cmake option
 SET(TREAT_WARNINGS_AS_ERRORS TRUE CACHE BOOL "Treat warnings as errors")
 
@@ -15,9 +25,10 @@ endif()
 set(BUILD_SHARED_LIBS TRUE CACHE BOOL "TRUE to build PU as shared libraries, FALSE to build it as static libraries")
 if(BUILD_SHARED_LIBS)
   set(PU_LIBRARY_TYPE SHARED)
-  set(PU_LIBRARY_PATH  ${CMAKE_HOME_DIRECTORY}/lib/${PU_SIZE_TYPE}${PU_SUFFIX}_shared)
+  set(PU_LIBRARY_PATH ${CMAKE_HOME_DIRECTORY}/lib/${PU_SIZE_TYPE}${PU_SUFFIX}_shared)
+  add_definitions("-DQT_DLL -DQWT_DLL")
 else()
-  add_definitions("-DPU_STATIC")
+  add_definitions("-DPU_STATIC -DQT_NODLL")
   set(PU_LIBRARY_TYPE STATIC)
   set(PU_LIBRARY_PATH  ${CMAKE_HOME_DIRECTORY}/lib/${PU_SIZE_TYPE}${PU_SUFFIX}_static)
   set(CMAKE_EXECUTABLE_SUFFIX s${CMAKE_EXECUTABLE_SUFFIX})
@@ -79,10 +90,16 @@ if(WIN32)
   endif()
 endif()
 
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_NO_DEBUG")
+endif()
+
 set(TICPP_LIB ticpp)
 
+include_directories(${QT_INCLUDES})
 include_directories(${PU_SOURCE_DIR}/include)
 include_directories(${PU_SOURCE_DIR}/common)
 
 add_subdirectory(src)
+add_subdirectory(samples)
 add_subdirectory(external/ticpp)
