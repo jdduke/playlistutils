@@ -5,6 +5,7 @@
 
 using namespace pu;
 
+/*
 std::string QtFileTraits::absDir(const char* sourcePath) const {
   return QFileInfo(sourcePath).absoluteDir().absolutePath().toStdString();
 }
@@ -16,6 +17,7 @@ std::string QtFileTraits::absName(const char* sourcePath) const {
 std::string QtFileTraits::absPath(const char* sourcePath) const {
   return QFileInfo(sourcePath).absoluteFilePath().toStdString();
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -32,5 +34,5 @@ bool QtFileTraits::remove(const char* sourcePath) const {
 }
 
 bool QtFileTraits::move(const char* sourcePath, const char* destPath) const {
-  return QFile::copy(sourcePath, destPath) && remove(sourcePath);
+  return copy(sourcePath, destPath) && remove(sourcePath);
 }

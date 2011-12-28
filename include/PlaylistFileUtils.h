@@ -10,9 +10,6 @@ namespace pu {
 class PU_API FileTraits {
 public:
   virtual ~FileTraits() { }
-  virtual std::string absDir(const char* sourcePath) const                = 0;
-  virtual std::string absName(const char* sourcePath) const               = 0;
-  virtual std::string absPath(const char* sourcePath) const               = 0;
   virtual bool copy(const char* sourcePath, const char* destPath) const   = 0;
   virtual bool rename(const char* sourcePath, const char* destName) const = 0;
   virtual bool remove(const char* sourcePath) const                       = 0;
@@ -22,9 +19,9 @@ public:
 class PU_API File {
 public:
   File( const char* source, const FileTraits& traits )
-      : mDir( traits.absDir(source) ),
-      mName( traits.absName(source) ),
-      mPath( traits.absPath(source) ),
+      : mDir( fileDir(source) ),
+      mName( fileName(source) ),
+      mPath( source ),
       mTraits( traits ) { }
 
   bool rename( const char* destName ) {
@@ -94,6 +91,17 @@ private:
     filePath.append("/");
     filePath.append(name);
     return filePath;
+  }
+
+  inline static std::string fileDir( const char* path ) {
+    std::string filePath(path);
+    return filePath.substr(0, filePath.find_last_of("/\\") + 1);
+  }
+
+  inline static std::string fileName( const char* path ) {
+    std::string filePath(path);
+    size_t p0 = filePath.find_last_of("/\\") + 1;
+    return filePath.substr(p0);
   }
 
   std::string mDir;
