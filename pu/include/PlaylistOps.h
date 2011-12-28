@@ -7,15 +7,73 @@
 #ifndef PLAYLIST_OPS_H
 #define PLAYLIST_OPS_H
 
-#include "PlaylistCommon.h"
+#include "PlaylistUtilities.h"
 #include "PlaylistOp.h"
+
+#include <string>
 
 namespace pu {
 
 class File;
 class FileTraits;
-class Playlist;
-class Song;
+
+///////////////////////////////////////////////////////////////////////////
+
+template< class Op >
+class PlaylistSongOp : public PlaylistOp {
+public:
+  PlaylistSongOp( const Op& op = Op() ) : mOp( op ) { }
+  void operator()( Playlist& p ) const {
+    p.applyOp( mOp );
+  }
+
+private:
+  DISALLOW_COPY_AND_ASSIGN(PlaylistSongOp);
+  const Op& mOp;
+};
+
+template< class Op >
+class ConstPlaylistSongOp : public ConstPlaylistOp {
+public:
+  ConstPlaylistSongOp( const Op& op = Op() ) : mOp( op ) { }
+  void operator()( const Playlist& p ) const {
+    p.applyOp( mOp );
+  }
+
+private:
+  DISALLOW_COPY_AND_ASSIGN(ConstPlaylistSongOp);
+  const SongOp& mOp;
+};
+
+///////////////////////////////////////////////////////////////////////////
+
+template< class Op >
+class PlaylistSongsOp : public PlaylistOp {
+public:
+  PlaylistSongsOp( const Op& op = Op() ) : mOp( op ) { }
+  void operator()( Playlist& p ) const {
+    p.apply( mOp );
+  }
+
+private:
+  DISALLOW_COPY_AND_ASSIGN(PlaylistSongsOp);
+  const Op& mOp;
+};
+
+template< class Op >
+class ConstPlaylistSongsOp : public ConstPlaylistOp {
+public:
+  ConstPlaylistSongsOp( const Op& op = Op() ) : mOp( op ) { }
+  void operator()( const Playlist& p ) const {
+    p.apply( mOp );
+  }
+
+private:
+  DISALLOW_COPY_AND_ASSIGN(ConstPlaylistSongsOp);
+  const Op& mOp;
+};
+
+///////////////////////////////////////////////////////////////////////////
 
 class PU_API CopySongOp : public ConstSongOp {
 public:

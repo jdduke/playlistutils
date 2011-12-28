@@ -5,6 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include <PlaylistUtilities.h>
+#include <PlaylistOps.h>
 #include <PlaylistStdUtils.h>
 
 #include <iostream>
