@@ -7,8 +7,10 @@
 #ifndef PLAYLIST_OPS_H
 #define PLAYLIST_OPS_H
 
-#include "PlaylistCommon.h"
+#include "PlaylistUtilities.h"
 #include "PlaylistOp.h"
+
+#include <string>
 
 namespace pu {
 

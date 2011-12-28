@@ -22,54 +22,51 @@ public:
   }
 };
 
-class Releaser {
-public:
-  template< typename T>
-  void operator()(T* ptr) {
-    if( ptr ) { ptr->release(); }
-  }
-};
-
 ///////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
 
-  std::unique_ptr<pu::Playlist, Releaser> playlist(pu::createPlaylist(""));
-  pu::StdFileTraits traits;
-  CommandLineListener listener;
+  pu::PlaylistManager& manager = pu::playlistManager();
+  pu::PlaylistPtr playlist = manager.importFromFile("");
 
-  ///////////////////////////////////////////////////////////////////////////
+  if ( playlist ) {
 
-  pu::SongComparator comparator;
-  pu::SortSongsOp sortOp( comparator, listener );
-  pu::PlaylistSongsOp<pu::SortSongsOp> sortPlaylist( sortOp );
-  sortPlaylist( *playlist );
+    ///////////////////////////////////////////////////////////////////////////
 
-  ///////////////////////////////////////////////////////////////////////////
+    pu::StdFileTraits traits;
+    CommandLineListener listener;
 
-  pu::DeleteSongOp deleteOp( traits, listener );
-  pu::PlaylistSongOp<pu::DeleteSongOp> deletePlaylist( deleteOp );
-  deletePlaylist( *playlist );
+    ///////////////////////////////////////////////////////////////////////////
 
-  ///////////////////////////////////////////////////////////////////////////
+    pu::SongComparator comparator;
+    pu::SortSongsOp sortOp( comparator, listener );
+    pu::PlaylistSongsOp<pu::SortSongsOp> sortPlaylist( sortOp );
+    sortPlaylist( *playlist );
 
-  pu::MoveSongOp moveOp( "", traits, listener );
-  pu::PlaylistSongOp<pu::MoveSongOp> movePlaylist( moveOp );
-  movePlaylist( *playlist );
+    ///////////////////////////////////////////////////////////////////////////
 
-  ///////////////////////////////////////////////////////////////////////////
+    pu::DeleteSongOp deleteOp( traits, listener );
+    pu::PlaylistSongOp<pu::DeleteSongOp> deletePlaylist( deleteOp );
+    deletePlaylist( *playlist );
 
-  // Functors
-  playlist->applyOp( deleteOp );
+    ///////////////////////////////////////////////////////////////////////////
 
-  ///////////////////////////////////////////////////////////////////////////
+    pu::MoveSongOp moveOp( "", traits, listener );
+    pu::PlaylistSongOp<pu::MoveSongOp> movePlaylist( moveOp );
+    movePlaylist( *playlist );
 
-  // Lambdas
-  playlist->applyOp( [](const pu::Song& song) { std::cout << "Hello " << song.artist() << std::endl;} );
+    ///////////////////////////////////////////////////////////////////////////
 
-  playlist->apply( [&comparator](pu::Song* start, pu::Song* stop) { std::sort(start, stop, comparator); } );
+    // Functors
+    playlist->applyOp( deleteOp );
 
-  ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Lambdas
+    playlist->applyOp( [](const pu::Song& song) { std::cout << "Hello " << song.artist() << std::endl;} );
+
+    playlist->apply( [&comparator](pu::Song* start, pu::Song* stop) { std::sort(start, stop, comparator); } );
+  }
 
   return 0;
 }

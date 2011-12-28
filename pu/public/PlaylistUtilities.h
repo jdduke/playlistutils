@@ -9,6 +9,7 @@
 
 #include <PlaylistCommon.h>
 #include <algorithm>
+#include <memory>
 
 namespace pu {
 
@@ -59,6 +60,34 @@ protected:
 
 };
 
+typedef std::unique_ptr<Playlist,Releaser> PlaylistPtr;
+
+class PU_API PlaylistImporter {
+public:
+  virtual ~PlaylistImporter() { }
+  virtual PlaylistPtr operator()(const char* fileName) const = 0;
+};
+
+class PU_API PlaylistExporter {
+public:
+  virtual ~PlaylistExporter() { }
+  virtual bool operator()(const Playlist& playlist, const char* fileName) const = 0;
+};
+
+class PU_API PlaylistManager {
+public:
+  virtual ~PlaylistManager() { }
+
+  virtual PlaylistPtr importFromFile(const char* fileName) const = 0;
+  virtual bool        exportToFile(const Playlist& playlist, const char* fileName) const = 0;
+
+  virtual bool registerImporter(PlaylistImporter* importer, const char* extension) = 0;
+  virtual bool supportsImport(const char* extension) const = 0;
+
+  virtual bool registerExporter(PlaylistExporter* exporter, const char* extension) = 0;
+  virtual bool supportsExport(const char* extension) const = 0;
+};
+
 class PU_API SongComparator {
 public:
   SongComparator() { }
@@ -68,7 +97,7 @@ public:
   }
 };
 
-PU_API Playlist*        createPlaylist(const char* name);
+PU_API PlaylistManager& playlistManager();
 
 }
 

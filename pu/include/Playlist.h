@@ -9,11 +9,16 @@
 
 #include "PlaylistUtilities.h"
 
-
+#include <assert.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace pu {
+
+typedef std::unique_ptr<Song> SongPtr;
+typedef std::unique_ptr<PlaylistImporter> PlaylistImporterPtr;
+typedef std::unique_ptr<PlaylistExporter> PlaylistExporterPtr;
 
 class SongImpl : public Song {
 public:
@@ -43,24 +48,52 @@ public:
     delete this;
   }
 
-  void        addSong(Song*);
-  size_t      songCount() const;
-  const Song& song(size_t index) const;
+  void        addSong(Song* song)           { if (song) mSongs.push_back( SongPtr(song) ); }
+  size_t      songCount() const        { return mSongs.size(); }
+  const Song& song(size_t index) const { assert(index < songCount()); return *mSongs[index]; }
 
 private:
   DISALLOW_COPY_AND_ASSIGN(PlaylistImpl);
 
-  inline Song* first() {  return (*std::begin(mSongs)).get(); }
-  inline const Song* first() const {  return (*std::begin(mSongs)).get(); }
+  inline       Song* first()       {  return songCount() > 0 ? (*std::begin(mSongs)).get() : nullptr; }
+  inline const Song* first() const {  return songCount() > 0 ? (*std::begin(mSongs)).get() : nullptr; }
 
-  inline Song* last() { return first() + songCount(); }
-  inline const Song* last() const {  return first() + songCount(); }
+  inline       Song* last()       { return first() + songCount(); }
+  inline const Song* last() const { return first() + songCount(); }
 
-  std::vector< std::unique_ptr<Song> > mSongs;
+  std::vector< SongPtr > mSongs;
   /*
   class Impl;
   common::pimpl<Impl> m;
   */
+};
+
+
+class PlaylistManagerImpl : public PlaylistManager {
+public:
+  PlaylistManagerImpl() { loadDefaults(); }
+
+  PlaylistPtr importFromFile(const char* fileName) const;
+  bool        exportToFile(const Playlist& playlist, const char* fileName) const;
+
+  bool registerImporter(PlaylistImporter* importer, const char* extension);
+  bool supportsImport(const char* extension) const;
+
+  bool registerExporter(PlaylistExporter* exporter, const char* extension);
+  bool supportsExport(const char* extension) const;
+
+protected:
+
+  void loadDefaults();
+
+  const PlaylistImporter* getImporter(const std::string& extension) const;
+  const PlaylistExporter* getExporter(const std::string& extension) const;
+
+  typedef std::unordered_map<std::string, PlaylistExporterPtr> ExporterMap;
+  typedef std::unordered_map<std::string, PlaylistImporterPtr> ImporterMap;
+
+  ExporterMap mExporters;
+  ImporterMap mImporters;
 };
 
 }

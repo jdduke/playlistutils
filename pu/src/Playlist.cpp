@@ -6,58 +6,80 @@
 
 #include "Playlist.h"
 
-#include "pimpl_impl.h"
-
-#include <assert.h>
+#include "PlaylistFileUtils.h"
 
 namespace pu {
 
-Playlist* createPlaylist(const char* name) {
-  return new PlaylistImpl();
+PlaylistManager& playlistManager() {
+  static PlaylistManagerImpl playlistManager;
+  return playlistManager;
 }
 
-void releasePlaylist( Playlist* playlist ) {
-  playlist->release();
+
+void PlaylistManagerImpl::loadDefaults() {
+  // TODO: Implement m3u/wmpl/zpl playlist importer/exporters
 }
 
 }
 
 using namespace pu;
 
-void PlaylistImpl::addSong(Song* song) {
-  //m->add(song);
-  if (song) {
-    mSongs.push_back( std::unique_ptr<Song>(song) );
+
+static inline std::string extensionOf( const char* fileName ) {
+  return File::fileExtension( fileName );
+}
+
+const PlaylistImporter* PlaylistManagerImpl::getImporter( const std::string& extension ) const {
+  auto it = mImporters.find( extension );
+  return (it != mImporters.end()) ? it->second.get() : nullptr;
+}
+
+const PlaylistExporter* PlaylistManagerImpl::getExporter( const std::string& extension ) const {
+  auto it = mExporters.find( extension );
+  return (it != mExporters.end()) ? it->second.get() : nullptr;
+}
+
+pu::PlaylistPtr PlaylistManagerImpl::importFromFile( const char* fileName ) const {
+  PlaylistPtr playlist;
+  auto importer( getImporter( extensionOf(fileName) ) );
+  if ( importer ) {
+    playlist = (*importer)( fileName ) ;
   }
+  return playlist;
 }
 
-size_t PlaylistImpl::songCount() const {
-  return mSongs.size();
+bool PlaylistManagerImpl::exportToFile( const Playlist& playlist, const char* fileName ) const {
+  bool success = false;
+  auto exporter( getExporter( extensionOf(fileName) ) );
+  if ( exporter ) {
+    success = (*exporter)( playlist, fileName );
+  }
+  return success;
 }
 
-const Song& PlaylistImpl::song(size_t index) const {
-  assert(index < songCount());
-  return *mSongs[index];
+bool PlaylistManagerImpl::registerImporter( PlaylistImporter* importer, const char* extension ) {
+  assert(nullptr != importer && "Invalid importer.");
+  bool importerExists = supportsImport( extension );
+  if ( importer ) {
+    mImporters.insert( ImporterMap::value_type(extension, PlaylistImporterPtr(importer)) );
+  }
+  return importerExists;
 }
 
-/*
-Song* Playlist::first() {
-  return &(*std::begin(mSongs));
-  //return m->first();
+bool PlaylistManagerImpl::supportsImport( const char* extension ) const {
+  return nullptr != getImporter( extension );
 }
 
-const Song* Playlist::first() const {
-  return &(*std::begin(mSongs));
-  //return m->first();
+bool PlaylistManagerImpl::registerExporter( PlaylistExporter* exporter, const char* extension ) {
+  assert(nullptr != exporter && "Invalid exporter.");
+  bool exporterExists = supportsExport( extension );
+  if (exporter) {
+    //assert(isValid(extension) && "Invalid exporter.");
+    mExporters.insert( ExporterMap::value_type(extension, PlaylistExporterPtr(exporter)) );
+  }
+  return exporterExists;
 }
 
-Song* Playlist::last() {
-  return &(*std::end(mSongs));
-  //return m->last();
+bool PlaylistManagerImpl::supportsExport( const char* extension ) const {
+  return nullptr != getExporter( extension );
 }
-
-const Song* Playlist::last() const {
-  return &(*std::end(mSongs));
-  //return m->last();
-}
-*/
