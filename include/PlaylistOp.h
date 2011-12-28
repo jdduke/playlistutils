@@ -43,7 +43,7 @@ public:
 class PU_API SongsOp {
 public:
   virtual ~SongsOp() { }
-  virtual bool operator()( Song* first, Song* last ) = 0;
+  virtual bool operator()( Song* first, Song* last ) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -57,26 +57,26 @@ public:
 class PU_API PlaylistOp {
 public:
   virtual ~PlaylistOp() { }
-  virtual void operator()( Playlist& ) = 0;
+  virtual void operator()( Playlist& ) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 template< class Op >
-class PU_API PlaylistSongOp : public PlaylistOp {
+class PlaylistSongOp : public PlaylistOp {
 public:
-  PlaylistSongOp( Op& op = Op() ) : mOp( op ) { }
-  void operator()( Playlist& p ) {
+  PlaylistSongOp( const Op& op = Op() ) : mOp( op ) { }
+  void operator()( Playlist& p ) const {
     p.applyOp( mOp );
   }
 
 private:
   DISALLOW_COPY_AND_ASSIGN(PlaylistSongOp);
-  Op& mOp;
+  const Op& mOp;
 };
 
 template< class Op >
-class PU_API ConstPlaylistSongOp : public ConstPlaylistOp {
+class ConstPlaylistSongOp : public ConstPlaylistOp {
 public:
   ConstPlaylistSongOp( const Op& op = Op() ) : mOp( op ) { }
   void operator()( const Playlist& p ) const {
@@ -91,22 +91,22 @@ private:
 ///////////////////////////////////////////////////////////////////////////
 
 template< class Op >
-class PU_API PlaylistSongsOp : public PlaylistOp {
+class PlaylistSongsOp : public PlaylistOp {
 public:
-  PlaylistSongsOp( Op& op = Op() ) : mOp( op ) { }
-  void operator()( Playlist& p ) {
+  PlaylistSongsOp( const Op& op = Op() ) : mOp( op ) { }
+  void operator()( Playlist& p ) const {
     p.apply( mOp );
   }
 
 private:
   DISALLOW_COPY_AND_ASSIGN(PlaylistSongsOp);
-  Op& mOp;
+  const Op& mOp;
 };
 
 template< class Op >
-class PU_API ConstPlaylistSongsOp : public ConstPlaylistOp {
+class ConstPlaylistSongsOp : public ConstPlaylistOp {
 public:
-  ConstPlaylistSongsOp( Op& op = Op() ) : mOp( op ) { }
+  ConstPlaylistSongsOp( const Op& op = Op() ) : mOp( op ) { }
   void operator()( const Playlist& p ) const {
     p.apply( mOp );
   }

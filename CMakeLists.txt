@@ -3,8 +3,6 @@ project(PU)
 
 set(CMAKE_DEBUG_POSTFIX "d")
 
-find_package(Qt4 REQUIRED)
-
 #find_package(Boost COMPONENTS filesystem)
 #if(NOT BOOST_FOUND)
 #  set(BOOST_ROOT "$ENV{BOOST_DIR}/boost_1_48_0")
@@ -16,6 +14,14 @@ find_package(Qt4 REQUIRED)
 # Treat warnings as errors cmake option
 SET(TREAT_WARNINGS_AS_ERRORS TRUE CACHE BOOL "Treat warnings as errors")
 
+if(MSVC10)
+  set(PU_SUFFIX _vc10)
+elseif(MSVC11)
+  set(PU_SUFFIX _vc11)
+else()
+  set(PU_SUFFIX)
+endif()
+
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
   set(PU_SIZE_TYPE x86)
 else()
@@ -26,15 +32,27 @@ set(BUILD_SHARED_LIBS TRUE CACHE BOOL "TRUE to build PU as shared libraries, FAL
 if(BUILD_SHARED_LIBS)
   set(PU_LIBRARY_TYPE SHARED)
   set(PU_LIBRARY_PATH ${CMAKE_HOME_DIRECTORY}/lib/${PU_SIZE_TYPE}${PU_SUFFIX}_shared)
-  add_definitions("-DQT_DLL -DQWT_DLL")
 else()
-  add_definitions("-DPU_STATIC -DQT_NODLL")
+  add_definitions("-DPU_STATIC")
   set(PU_LIBRARY_TYPE STATIC)
   set(PU_LIBRARY_PATH  ${CMAKE_HOME_DIRECTORY}/lib/${PU_SIZE_TYPE}${PU_SUFFIX}_static)
   set(CMAKE_EXECUTABLE_SUFFIX s${CMAKE_EXECUTABLE_SUFFIX})
 endif()
 
 set(PU_BINARY_PATH ${CMAKE_HOME_DIRECTORY}/bin/${PU_SIZE_TYPE}${PU_SUFFIX})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    ${PU_BINARY_PATH}
+    CACHE PATH
+    "Single Directory for all Executables.")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+    ${PU_BINARY_PATH}
+    CACHE PATH
+    "Single Directory for all Libraries")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+    ${PU_LIBRARY_PATH}
+    CACHE PATH
+    "Single Directory for all static libraries.")
 
 if(UNIX)
   if(TREAT_WARNINGS_AS_ERRORS)
@@ -94,9 +112,20 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_NO_DEBUG")
 endif()
 
+SET(ENABLE_QT FALSE CACHE BOOL "Enable Qt usage")
+if(ENABLE_QT)
+  find_package(Qt4 REQUIRED)
+  include_directories(${QT_INCLUDES})
+  add_definitions("-DHAS_QT")
+  if(BUILD_SHARED_LIBS)
+    add_definitions("-DQT_DLL -DQWT_DLL")
+  else()
+    add_definitions("-DPU_STATIC -DQT_NODLL")
+  endif()
+endif()
+
 set(TICPP_LIB ticpp)
 
-include_directories(${QT_INCLUDES})
 include_directories(${PU_SOURCE_DIR}/include)
 include_directories(${PU_SOURCE_DIR}/common)
 

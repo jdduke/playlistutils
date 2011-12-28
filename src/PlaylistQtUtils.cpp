@@ -1,5 +1,7 @@
 #include "PlaylistQtUtils.h"
 
+#if defined(HAS_QT)
+
 #include <QDir>
 #include <QFileInfo>
 
@@ -22,17 +24,19 @@ std::string QtFileTraits::absPath(const char* sourcePath) const {
 ///////////////////////////////////////////////////////////////////////////
 
 bool QtFileTraits::copy(const char* sourcePath, const char* destPath) const {
-  return QFile::copy(sourcePath, destPath);
+  return QFile(sourcePath).copy(destPath);
 }
 
 bool QtFileTraits::rename(const char* sourcePath, const char* destName) const {
-  return QFile::rename(sourcePath, destName);
+  return QFile(sourcePath).rename(destName);
 }
 
 bool QtFileTraits::remove(const char* sourcePath) const {
-  return QFile::remove(sourcePath);
+  return QFile(sourcePath).remove();
 }
 
 bool QtFileTraits::move(const char* sourcePath, const char* destPath) const {
   return copy(sourcePath, destPath) && remove(sourcePath);
 }
+
+#endif

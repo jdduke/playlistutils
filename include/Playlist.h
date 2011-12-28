@@ -7,10 +7,11 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 namespace pu {
 
-class PU_API Song {
+class Song {
 public:
   Song(const Song& other)
     : mPath(other.mPath), mArtist(other.mArtist), mTitle(other.mTitle) { }
@@ -29,18 +30,23 @@ protected:
   std::string mPath, mArtist, mTitle;
 };
 
-class SongComparator {
+class PU_API SongComparator {
 public:
+  SongComparator() { }
   virtual ~SongComparator() { }
   virtual bool operator()( const Song& song1, const Song& song2 ) const {
     return std::strcmp( song1.title(), song2.title() ) < 0;
   }
 };
 
-class PU_API Playlist {
+class Playlist {
 public:
-  Playlist();
-  ~Playlist();
+  Playlist() { }
+  ~Playlist() { }
+
+  void release() {
+    delete this;
+  }
 
   void addSong(const Song&);
   void addSong(const Song&&);
@@ -50,34 +56,38 @@ public:
   const Song& song(size_t index) const;
 
   template<class Op> void apply( const Op& op ) const {
-    op( begin(), end() );
+    op( first(), last() );
   }
 
-  template<class Op> void apply( Op& op ) {
-    op( begin(), end() );
+  template<class Op> void apply( const Op& op ) {
+    op( first(), last() );
   }
 
   template<class Op> void applyOp( const Op& op ) const {
-    std::for_each( begin(), end(), op);
+    std::for_each( first(), last(), op);
   }
 
-  template<class Op> void applyOp( Op& op ) {
-    std::for_each( begin(), end(), op);
+  template<class Op> void applyOp( const Op& op ) {
+    std::for_each( first(), last(), op);
   }
 
 private:
-
-  Song* begin();
-  const Song* begin() const;
-
-  Song* end();
-  const Song* end() const;
-
   DISALLOW_COPY_AND_ASSIGN(Playlist);
 
+  inline Song* first() {  return &(*std::begin(mSongs)); }
+  inline const Song* first() const {  return &(*std::begin(mSongs)); }
+
+  inline Song* last() { return &(*std::end(mSongs)); }
+  inline const Song* last() const {  return &(*std::end(mSongs)); }
+
+  std::vector<Song> mSongs;
+  /*
   class Impl;
-  pimpl<Impl> m;
+  common::pimpl<Impl> m;
+  */
 };
+
+PU_API Playlist* createPlaylist(const char* name);
 
 }
 

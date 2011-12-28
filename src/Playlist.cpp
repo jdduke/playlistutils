@@ -3,10 +3,18 @@
 #include "pimpl_impl.h"
 
 #include <assert.h>
-#include <vector>
 
 namespace pu {
 
+Playlist* createPlaylist(const char* name) {
+  return new Playlist();
+}
+
+void releasePlaylist( Playlist* playlist ) {
+  delete playlist;
+}
+
+/*
 class Playlist::Impl {
 public:
 
@@ -18,62 +26,66 @@ public:
     mSongs.push_back(song);
   }
 
-  inline Song* begin() {
-    return &(*mSongs.begin());
+  inline Song* first() {
+    return &(*std::begin(mSongs));
   }
 
-  inline const Song* begin() const {
-    return &(*mSongs.begin());
+  inline const Song* first() const {
+    return &(*std::begin(mSongs));
   }
 
-  inline Song* end() {
-    return &(*mSongs.end());
+  inline Song* last() {
+    return &(*std::end(mSongs));
   }
 
-  inline const Song* end() const {
-    return &(*mSongs.end());
+  inline const Song* last() const {
+    return &(*std::end(mSongs));
   }
 
   std::vector<Song> mSongs;
 };
+*/
 
 }
 
 using namespace pu;
 
-Playlist::Playlist() { }
-
-Playlist::~Playlist() { }
-
 void Playlist::addSong(const Song& song) {
-  m->add(song);
+  //m->add(song);
+  mSongs.push_back(song);
 }
 
 void Playlist::addSong(const Song&& song) {
-  m->add(song);
+  mSongs.push_back(song);//m->add(song);
 }
 
 size_t Playlist::songCount() const {
-  return m->mSongs.size();
+  return mSongs.size();
 }
 
 const Song& Playlist::song(size_t index) const {
   assert(index < songCount());
-  return m->mSongs[index];
+  return mSongs[index];
 }
 
-Song* Playlist::begin() {
-  return m->begin();
+/*
+Song* Playlist::first() {
+  return &(*std::begin(mSongs));
+  //return m->first();
 }
 
-const Song* Playlist::begin() const {
-  return m->begin();
+const Song* Playlist::first() const {
+  return &(*std::begin(mSongs));
+  //return m->first();
 }
 
-Song* Playlist::end() {
-  return m->end();
+Song* Playlist::last() {
+  return &(*std::end(mSongs));
+  //return m->last();
 }
 
-const Song* Playlist::end() const {
-  return m->end();
+const Song* Playlist::last() const {
+  return &(*std::end(mSongs));
+  //return m->last();
 }
+*/

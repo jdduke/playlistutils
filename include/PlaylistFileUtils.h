@@ -16,7 +16,7 @@ public:
   virtual bool move(const char* sourcePath, const char* destPath) const   = 0;
 };
 
-class PU_API File {
+class File {
 public:
   File( const char* source, const FileTraits& traits )
       : mDir( fileDir(source) ),

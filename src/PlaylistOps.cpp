@@ -11,7 +11,7 @@ CopySongOp::CopySongOp( const char* destDir, const FileTraits& traits, const OpL
 bool CopySongOp::operator()( const Song& song ) const {
   File file( song.path(), mTraits );
   mListener.beginOp( opName(file).c_str() );
-  bool success = file.copy( mDestDir.c_str() );
+  bool success = file.copy( mDestDir );
   mListener.endOp( success );
   return success;
 }
@@ -20,7 +20,7 @@ std::string CopySongOp::opName( const File& file ) const {
   std::string opName("Copying ");
   opName.append( file.getPath() );
   opName.append( " to " );
-  opName.append( mDestDir.c_str() );
+  opName.append( mDestDir );
   return opName;
 }
 
@@ -29,10 +29,10 @@ std::string CopySongOp::opName( const File& file ) const {
 MoveSongOp::MoveSongOp( const char* destDir, const FileTraits& traits, const OpListener& listener )
   : mDestDir(destDir), mTraits( traits ), mListener( listener ) { }
 
-bool MoveSongOp::operator()( const Song& song ) {
+bool MoveSongOp::operator()( Song& song ) {
   File file( song.path(), mTraits );
   mListener.beginOp( opName(file).c_str() );
-  bool success = file.move( mDestDir.c_str() );
+  bool success = file.move( mDestDir );
   mListener.endOp( success );
   return success;
 }
@@ -41,7 +41,7 @@ std::string MoveSongOp::opName( const File& file ) const {
   std::string opName("Moving ");
   opName.append( file.getPath() );
   opName.append( " to " );
-  opName.append( mDestDir.c_str() );
+  opName.append( mDestDir );
   return opName;
 }
 
@@ -50,7 +50,7 @@ std::string MoveSongOp::opName( const File& file ) const {
 DeleteSongOp::DeleteSongOp( const FileTraits& traits, const OpListener& listener )
     : mTraits( traits ), mListener( listener ) { }
 
-bool DeleteSongOp::operator()( const Song& song ) {
+bool DeleteSongOp::operator()( Song& song ) {
   File file( song.path(), mTraits );
   mListener.beginOp( opName(file).c_str() );
   bool success = file.remove();
@@ -71,7 +71,7 @@ SortSongsOp::SortSongsOp( const SongComparator& compare /*= SongComparator() */,
 
 }
 
-bool SortSongsOp::operator()( Song* first, Song* last ) {
+bool SortSongsOp::operator()( Song* first, Song* last ) const {
   mListener.beginOp( "Sorting..." );
   std::sort(first, last, mCompare);
   mListener.endOp( true );

@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace pu {
+namespace common {
 
 template<typename T>
 pimpl<T>::pimpl() : m( new T() ) { }

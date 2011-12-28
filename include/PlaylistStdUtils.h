@@ -6,7 +6,7 @@
 
 namespace pu {
 
-class PU_API StdFileTraits {
+class PU_API StdFileTraits : public FileTraits {
 public:
   virtual bool copy(const char* sourcePath, const char* destPath) const;
   virtual bool rename(const char* sourcePath, const char* destName) const;

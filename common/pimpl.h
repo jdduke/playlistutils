@@ -1,9 +1,11 @@
 #ifndef PIMPL_H
 #define PIMPL_H
 
+#include "common.h"
+
 #include <memory>
 
-namespace pu {
+namespace common {
 
 template <typename T>
 class pimpl {

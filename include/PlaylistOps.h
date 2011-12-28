@@ -15,13 +15,13 @@ class PU_API CopySongOp : public ConstSongOp {
 public:
   CopySongOp( const char* destDir, const FileTraits& traits, const OpListener& listener = OpListener() );
 
-  virtual bool operator()( const Song& song ) const;
+  bool operator()( const Song& song ) const;
 
 private:
 
   inline std::string opName( const File& file ) const;
 
-  std::string mDestDir;
+  const char* mDestDir;
   const FileTraits& mTraits;
   OpListener mListener;
 };
@@ -32,13 +32,13 @@ class PU_API MoveSongOp : public SongOp {
 public:
   MoveSongOp( const char* destDir, const FileTraits& traits, const OpListener& listener = OpListener() );
 
-  virtual bool operator()( const Song& song );
+  bool operator()( Song& song );
 
 private:
 
   inline std::string opName( const File& file ) const;
 
-  std::string mDestDir;
+  const char* mDestDir;
   const FileTraits& mTraits;
   OpListener mListener;
 };
@@ -49,7 +49,7 @@ class PU_API DeleteSongOp : public SongOp {
 public:
   DeleteSongOp( const FileTraits& traits, const OpListener& listener = OpListener() );
 
-  virtual bool operator()( const Song& song );
+  bool operator()( Song& song );
 
 private:
 
@@ -65,7 +65,7 @@ class PU_API SortSongsOp : public SongsOp {
 public:
   SortSongsOp( const SongComparator& compare = SongComparator(),  const OpListener& listener = OpListener() );
 
-  virtual bool operator()( Song* first, Song* last );
+  bool operator()( Song* first, Song* last ) const;
 
 private:
   SongComparator mCompare;

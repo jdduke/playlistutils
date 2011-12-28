@@ -7,4 +7,4 @@ set(EX_PROG "puSimple")
 #endif()
 
 add_executable(${EX_PROG} ${SIMPLE_SOURCES} ${SIMPLE_HEADERS})
-target_link_libraries(${EX_PROG} ${QT_LIBRARIES} pu ${TICPP_LIB})
+target_link_libraries(${EX_PROG} ${QT_QTCORE_LIBRARY} pu ${TICPP_LIB})
