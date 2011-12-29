@@ -38,10 +38,11 @@ struct PlaylistPLSExport {
   }
 };
 
-struct PlaylistPLSImport : public PlaylistImportIterator {
-  PlaylistPLSImport( std::ifstream& ifs ) : PlaylistImportIterator(ifs) { }
+class PlaylistPLSImport : public PlaylistImportIterator {
+public:
+  PlaylistPLSImport( std::ifstream& ifs ) { load( ifs ); }
 
-  void operator()( const std::string& line ) {
+  void handle( const std::string& line ) {
     if (!line.empty()) {
       //TODO: Handle
     }

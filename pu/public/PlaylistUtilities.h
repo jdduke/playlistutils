@@ -10,7 +10,7 @@
 #include <PlaylistCommon.h>
 #include <algorithm>
 #include <memory>
-#include <limits>
+#include <vector>
 
 namespace pu {
 
@@ -27,6 +27,8 @@ public:
   virtual const char* title()  const { return ""; }
 };
 
+typedef std::unique_ptr<Song> SongPtr;
+
 class PU_API Playlist {
 public:
   ///////////////////////////////////////////////////////////////////////////
@@ -42,11 +44,15 @@ public:
   ///////////////////////////////////////////////////////////////////////////
 
   template<class Op> inline void apply( const Op& op ) const {
-    op( first(), last() );
+    if (songCount() > 0 ) {
+      op( first()->get(), last() - first() );
+    }
   }
 
   template<class Op> inline void apply( const Op& op ) {
-    op( first(), last() );
+    if (songCount() > 0 ) {
+      op( first()->get(), last() - first() );
+    }
   }
 
   template<class Op> inline void applyOp( const Op& op ) const {
@@ -58,12 +64,21 @@ public:
   }
 
 protected:
-  virtual Song* first()             = 0;
+/*  virtual Song* first()             = 0;
   virtual const Song* first() const = 0;
 
   virtual Song* last()              = 0;
-  virtual const Song* last() const  = 0;
+  virtual const Song* last() const  = 0;*/
 
+  typedef std::vector< SongPtr > Songs;
+
+  inline       Songs::iterator first()       { return mSongs.begin(); }
+  inline Songs::const_iterator first() const { return mSongs.begin(); }
+
+  inline       Songs::iterator last()       { return mSongs.end(); }
+  inline Songs::const_iterator last() const { return mSongs.end(); }
+
+  Songs mSongs;
 };
 
 typedef std::unique_ptr<Playlist,Releaser> PlaylistPtr;

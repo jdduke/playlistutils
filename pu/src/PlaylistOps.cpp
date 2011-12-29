@@ -77,9 +77,9 @@ SortSongsOp::SortSongsOp( const SongComparator& compare /*= SongComparator() */,
 
 }
 
-bool SortSongsOp::operator()( Song* first, Song* last ) const {
+bool SortSongsOp::operator()( Song* first, size_t count ) const {
   mListener.beginOp( "Sorting..." );
-  std::sort(first, last, mCompare);
+  std::sort(first, first + count, mCompare);
   mListener.endOp( true );
   return true;
 }

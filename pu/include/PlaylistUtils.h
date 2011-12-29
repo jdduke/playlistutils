@@ -21,8 +21,14 @@
 
 namespace pu {
 
-struct PlaylistImportIterator {
-  PlaylistImportIterator( std::ifstream& ifs ) {
+class PlaylistImportIterator {
+public:
+
+  virtual ~PlaylistImportIterator() { }
+
+  virtual void handle( const std::string& line ) = 0;
+
+  void load( std::ifstream& ifs ) {
     if ( ifs.is_open() ) {
       std::string line;
       while ( ifs.good() ) {
@@ -37,8 +43,6 @@ struct PlaylistImportIterator {
     }
   }
 
-  virtual void handle(const std::string& line ) { }
-
   bool hasNext( ) const { return !mSongs.empty(); }
 
   SongPtr next( ) { 
@@ -50,12 +54,13 @@ struct PlaylistImportIterator {
     return val;
   }
 
+protected:
   std::deque<SongPtr> mSongs;
 };
 
 static inline std::string&& trim(const std::string& str) {
   std::string temp(str);
-  std::string::size_type pos = temp.find_last_not_of(' ');
+  auto pos = temp.find_last_not_of(' ');
   if (pos != std::string::npos) {
     temp.erase(pos + 1);
     pos = temp.find_first_not_of(' ');

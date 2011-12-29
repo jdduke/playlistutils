@@ -26,19 +26,27 @@ public:
 
 int main(int argc, char** argv) {
 
+  
   pu::PlaylistManager& manager = pu::playlistManager();
-  pu::PlaylistPtr playlist = manager.importFromFile("");
+  pu::PlaylistPtr playlist;
 
-  if ( playlist ) {
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    pu::StdFileTraits traits;
-    CommandLineListener listener;
+  if ( argc <= 1 ) {
+     playlist = manager.importFromFile("test.m3u");
+  } else {
+    playlist = manager.importFromFile(argv[1]);
+  }
+  
+  if ( playlist && playlist->songCount() > 0 ) {
 
     ///////////////////////////////////////////////////////////////////////////
 
     pu::SongComparator comparator;
+    pu::StdFileTraits traits;
+    CommandLineListener listener;
+
+    /*
+    ///////////////////////////////////////////////////////////////////////////
+
     pu::SortSongsOp sortOp( comparator, listener );
     pu::PlaylistSongsOp<pu::SortSongsOp> sortPlaylist( sortOp );
     sortPlaylist( *playlist );
@@ -61,11 +69,16 @@ int main(int argc, char** argv) {
     playlist->applyOp( deleteOp );
 
     ///////////////////////////////////////////////////////////////////////////
+    */
 
     // Lambdas
-    playlist->applyOp( [](const pu::Song& song) { std::cout << "Hello " << song.artist() << std::endl;} );
+    playlist->applyOp( [](const pu::SongPtr& song) {
+      std::cout << "Hello " << song->path() << std::endl;
+    });
 
-    playlist->apply( [&comparator](pu::Song* start, pu::Song* stop) { std::sort(start, stop, comparator); } );
+    playlist->apply( [&comparator](pu::Song* start, size_t count) { 
+      std::sort(start, start + count, comparator); 
+    });
   }
 
   return 0;

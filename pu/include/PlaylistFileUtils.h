@@ -23,7 +23,16 @@ public:
   virtual bool exists(const char* sourcePath) const                       = 0;
 };
 
-inline bool hasEnding( const std::string& path, const std::string& ending ) {
+
+inline bool beginsWith( const std::string& path, const std::string& beginning ) {
+  if (path.length() >= beginning.length()) {
+    return (0 == path.compare(0, beginning.length(), beginning));
+  } else {
+    return false;
+  }
+}
+
+inline bool endsWith( const std::string& path, const std::string& ending ) {
   if (path.length() >= ending.length()) {
     return (0 == path.compare(path.length() - ending.length(), ending.length(), ending));
   } else {
@@ -31,8 +40,12 @@ inline bool hasEnding( const std::string& path, const std::string& ending ) {
   }
 }
 
-inline bool hasEnding( const std::string& path, const char* ending ) {
-  return hasEnding(path, std::string(ending));
+inline bool endsWith( const std::string& path, const char* ending ) {
+  return endsWith(path, std::string(ending));
+}
+
+inline bool beginsWith( const std::string& path, const char* beginning ) {
+  return beginsWith(path, std::string(beginning));
 }
 
 class File {
@@ -90,7 +103,7 @@ public:
     std::string file( fileName(path) );
     size_t p0 = file.find_last_of(".");
     if ( p0 != std::string::npos ) {
-      return file.substr(p0);
+      return file.substr(p0 + 1);
     }
     return "";
   }

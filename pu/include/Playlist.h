@@ -30,8 +30,10 @@ public:
     : mLength(other.mLength), mPath(other.mPath), mArtist(other.mArtist), mTitle(other.mTitle) { }
   SongImpl(const SongImpl&& other)
     : mLength(other.mLength), mPath(std::move(other.mPath)), mArtist(std::move(other.mArtist)), mTitle(std::move(other.mTitle)) { }
-  SongImpl(size_t length, const std::string&& path, const std::string&& artist, const std::string&& title )
-    : mLength(length), mPath(std::move(path)), mArtist(std::move(artist)), mTitle(std::move(title)) { }
+  /*SongImpl(size_t length, const std::string&& path, const std::string&& artist, const std::string&& title )
+    : mLength(length), mPath(std::move(path)), mArtist(std::move(artist)), mTitle(std::move(title)) { }*/
+  SongImpl(size_t length, const std::string& path, const std::string& artist, const std::string& title )
+    : mLength(length), mPath(path), mArtist(artist), mTitle(title) { }
   SongImpl(size_t length, const char* path, const char* artist = nullptr, const char* title = nullptr )
     : mLength(length), mPath(path), mArtist(artist), mTitle(title) { }
 
@@ -61,14 +63,6 @@ public:
 
 private:
   DISALLOW_COPY_AND_ASSIGN(PlaylistImpl);
-
-  inline       Song* first()       {  return songCount() > 0 ? (*std::begin(mSongs)).get() : nullptr; }
-  inline const Song* first() const {  return songCount() > 0 ? (*std::begin(mSongs)).get() : nullptr; }
-
-  inline       Song* last()       { return first() + songCount(); }
-  inline const Song* last() const { return first() + songCount(); }
-
-  std::vector< SongPtr > mSongs;
 };
 
 
@@ -116,8 +110,8 @@ public:
 
       // Write playlist song info
       //  Umm.... lambdas are nice
-      playlist.applyOp( [&]( const Song& song ) {
-        ofs << exporter( song );
+      playlist.applyOp( [&]( const SongPtr& song ) {
+        ofs << exporter( *song );
       });
 
       // Write playlist end
