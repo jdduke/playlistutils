@@ -10,12 +10,18 @@
 #include <PlaylistCommon.h>
 #include <algorithm>
 #include <memory>
+#include <limits>
 
 namespace pu {
 
 class PU_API Song {
 public:
+  enum {
+    INVALID_LENGTH = ((size_t)-1)
+  };
+  
   virtual ~Song() { }
+  virtual size_t      length() const { return INVALID_LENGTH; }
   virtual const char* artist() const { return ""; }
   virtual const char* path()   const { return ""; }
   virtual const char* title()  const { return ""; }
@@ -29,8 +35,8 @@ public:
 
   virtual void release() = 0;
 
-  virtual void        addSong(Song*) = 0;
-  virtual size_t      songCount() const = 0;
+  virtual void        addSong(Song*)           = 0;
+  virtual size_t      songCount() const        = 0;
   virtual const Song& song(size_t index) const = 0;
 
   ///////////////////////////////////////////////////////////////////////////

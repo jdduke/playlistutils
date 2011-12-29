@@ -16,26 +16,32 @@
 
 namespace pu {
 
+class SongImpl;
+class PlaylistImpl;
+
 typedef std::unique_ptr<Song> SongPtr;
-typedef std::unique_ptr<PlaylistImporter> PlaylistImporterPtr;
-typedef std::unique_ptr<PlaylistExporter> PlaylistExporterPtr;
+typedef std::unique_ptr<PlaylistImpl,Releaser> PlaylistImplPtr;
+typedef std::unique_ptr<PlaylistImporter>      PlaylistImporterPtr;
+typedef std::unique_ptr<PlaylistExporter>      PlaylistExporterPtr;
 
 class SongImpl : public Song {
 public:
   SongImpl(const SongImpl& other)
-    : mPath(other.mPath), mArtist(other.mArtist), mTitle(other.mTitle) { }
+    : mLength(other.mLength), mPath(other.mPath), mArtist(other.mArtist), mTitle(other.mTitle) { }
   SongImpl(const SongImpl&& other)
-    : mPath(std::move(other.mPath)), mArtist(std::move(other.mArtist)), mTitle(std::move(other.mTitle)) { }
-  SongImpl(const std::string&& path, const std::string&& artist, const std::string&& title )
-    : mPath(std::move(path)), mArtist(std::move(artist)), mTitle(std::move(title)) { }
-  SongImpl(const char* path, const char* artist = nullptr, const char* title = nullptr )
-    : mPath(path), mArtist(artist), mTitle(title) { }
+    : mLength(other.mLength), mPath(std::move(other.mPath)), mArtist(std::move(other.mArtist)), mTitle(std::move(other.mTitle)) { }
+  SongImpl(size_t length, const std::string&& path, const std::string&& artist, const std::string&& title )
+    : mLength(length), mPath(std::move(path)), mArtist(std::move(artist)), mTitle(std::move(title)) { }
+  SongImpl(size_t length, const char* path, const char* artist = nullptr, const char* title = nullptr )
+    : mLength(length), mPath(path), mArtist(artist), mTitle(title) { }
 
+  size_t      length() const { return mLength; }
   const char* path()   const { return mPath.c_str(); }
   const char* artist() const { return mArtist.c_str(); }
   const char* title()  const { return mTitle.c_str(); }
 
 protected:
+  size_t mLength;
   std::string mPath, mArtist, mTitle;
 };
 
@@ -48,7 +54,8 @@ public:
     delete this;
   }
 
-  void        addSong(Song* song)           { if (song) mSongs.push_back( SongPtr(song) ); }
+  void        addSong(SongPtr&& song)  { if (song) mSongs.push_back( std::move(song) ); }
+  void        addSong(Song* song)      { addSong( SongPtr(song) ); }
   size_t      songCount() const        { return mSongs.size(); }
   const Song& song(size_t index) const { assert(index < songCount()); return *mSongs[index]; }
 
@@ -62,10 +69,6 @@ private:
   inline const Song* last() const { return first() + songCount(); }
 
   std::vector< SongPtr > mSongs;
-  /*
-  class Impl;
-  common::pimpl<Impl> m;
-  */
 };
 
 
@@ -82,8 +85,7 @@ public:
   bool registerExporter(PlaylistExporter* exporter, const char* extension);
   bool supportsExport(const char* extension) const;
 
-protected:
-
+private:
   void loadDefaults();
 
   const PlaylistImporter* getImporter(const std::string& extension) const;
@@ -94,6 +96,55 @@ protected:
 
   ExporterMap mExporters;
   ImporterMap mImporters;
+};
+
+template< class Exporter >
+class PlaylistExporterImpl : public PlaylistExporter {
+public:
+  PlaylistExporterImpl( const Exporter& exporter = Exporter() ) 
+    : mExporter( exporter ) { }
+
+  bool operator()(const Playlist& playlist, const char* fileName) const {
+    bool success = false;
+    std::ofstream ofs(fileName);
+    const Exporter& exporter = mExporter;
+    if ( ofs ) {
+      success = true;
+
+      // Write playlist header info
+      ofs << exporter( playlist );
+
+      // Write playlist song info
+      //  Umm.... lambdas are nice
+      playlist.applyOp( [&]( const Song& song ) {
+        ofs << exporter( song );
+      });
+
+      // Write playlist end
+      ofs << exporter( );
+    }
+
+    return success;
+  }
+
+private:
+  Exporter mExporter;
+};
+
+template< class Importer >
+class PlaylistImporterImpl : public PlaylistImporter {
+public:
+  PlaylistPtr operator()(const char* fileName) const {
+    PlaylistImplPtr playlist( new PlaylistImpl() );
+    std::ifstream ifs( fileName );
+    if ( ifs ) {
+      Importer it( ifs );
+      while ( it.hasNext( ) ) {
+        playlist->addSong( it.next( ) );
+      };
+    }
+    return PlaylistPtr(playlist.release());
+  }
 };
 
 }

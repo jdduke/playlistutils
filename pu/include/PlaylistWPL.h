@@ -1,0 +1,16 @@
+/////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2011, Jared Duke.
+// This code is released under the MIT License.
+// www.opensource.org/licenses/mit-license.php
+/////////////////////////////////////////////////////////////////////////////
+
+#ifndef PLAYLIST_WPL_H
+#define PLAYLIST_WPL_H
+
+#include "PlaylistUtilities.h"
+
+namespace pu {
+
+}
+
+#endif

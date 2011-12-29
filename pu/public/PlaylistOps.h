@@ -7,8 +7,8 @@
 #ifndef PLAYLIST_OPS_H
 #define PLAYLIST_OPS_H
 
-#include "PlaylistUtilities.h"
-#include "PlaylistOp.h"
+#include <PlaylistUtilities.h>
+#include <PlaylistOp.h>
 
 #include <string>
 

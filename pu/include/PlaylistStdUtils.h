@@ -18,6 +18,8 @@ public:
   virtual bool rename(const char* sourcePath, const char* destName) const;
   virtual bool remove(const char* sourcePath) const;
   virtual bool move(const char* sourcePath, const char* destPath) const;
+  virtual bool exists(const char* sourcePath) const;
+
 };
 
 }

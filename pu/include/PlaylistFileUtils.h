@@ -20,7 +20,20 @@ public:
   virtual bool rename(const char* sourcePath, const char* destName) const = 0;
   virtual bool remove(const char* sourcePath) const                       = 0;
   virtual bool move(const char* sourcePath, const char* destPath) const   = 0;
+  virtual bool exists(const char* sourcePath) const                       = 0;
 };
+
+inline bool hasEnding( const std::string& path, const std::string& ending ) {
+  if (path.length() >= ending.length()) {
+    return (0 == path.compare(path.length() - ending.length(), ending.length(), ending));
+  } else {
+    return false;
+  }
+}
+
+inline bool hasEnding( const std::string& path, const char* ending ) {
+  return hasEnding(path, std::string(ending));
+}
 
 class File {
 public:
@@ -58,7 +71,7 @@ public:
     return false;
   }
 
-  const char* getDir() const  { return mDir.c_str();  }
+  const char* getDir()  const { return mDir.c_str();  }
   const char* getName() const { return mName.c_str(); }
   const char* getPath() const { return mPath.c_str(); }
 

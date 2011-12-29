@@ -34,3 +34,8 @@ bool StdFileTraits::remove(const char* sourcePath) const {
 bool StdFileTraits::move(const char* sourcePath, const char* destPath) const {
   return copy(sourcePath, destPath) && remove(sourcePath);
 }
+
+bool pu::StdFileTraits::exists( const char* sourcePath ) const {
+  std::ifstream ifs(sourcePath);
+  return nullptr != ifs;
+}

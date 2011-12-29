@@ -8,6 +8,11 @@
 
 #include "PlaylistFileUtils.h"
 
+#include "PlaylistM3U.h"
+#include "PlaylistPLS.h"
+#include "PlaylistWPL.h"
+#include "PlaylistZPL.h"
+
 namespace pu {
 
 PlaylistManager& playlistManager() {
@@ -15,18 +20,18 @@ PlaylistManager& playlistManager() {
   return playlistManager;
 }
 
-
-void PlaylistManagerImpl::loadDefaults() {
-  // TODO: Implement m3u/wmpl/zpl playlist importer/exporters
-}
-
 }
 
 using namespace pu;
 
-
 static inline std::string extensionOf( const char* fileName ) {
   return File::fileExtension( fileName );
+}
+
+void PlaylistManagerImpl::loadDefaults() {
+  registerImporter(new PlaylistImporterImpl<PlaylistM3UImport>(), "m3u");
+  registerExporter(new PlaylistExporterImpl<PlaylistM3UExport>(), "m3u");
+  // TODO: Implement pls/wmpl/zpl playlist importer/exporters  
 }
 
 const PlaylistImporter* PlaylistManagerImpl::getImporter( const std::string& extension ) const {
