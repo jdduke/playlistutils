@@ -10,8 +10,6 @@
 #include <PlaylistUtilities.h>
 #include <PlaylistOp.h>
 
-#include <string>
-
 namespace pu {
 
 class File;
@@ -82,7 +80,7 @@ public:
   bool operator()( const Song& song ) const;
 
 private:
-
+  DISALLOW_COPY_AND_ASSIGN(CopySongOp);
   inline std::string opName( const File& file ) const;
 
   const char* mDestDir;
@@ -99,7 +97,7 @@ public:
   bool operator()( Song& song );
 
 private:
-
+  DISALLOW_COPY_AND_ASSIGN(MoveSongOp);
   inline std::string opName( const File& file ) const;
 
   const char* mDestDir;
@@ -116,7 +114,7 @@ public:
   bool operator()( Song& song );
 
 private:
-
+  DISALLOW_COPY_AND_ASSIGN(DeleteSongOp);
   inline std::string opName( const File& file ) const;
 
   const FileTraits& mTraits;
@@ -129,7 +127,7 @@ class PU_API SortSongsOp : public SongsOp {
 public:
   SortSongsOp( const SongComparator& compare = SongComparator(),  const OpListener& listener = OpListener() );
 
-  bool operator()( Song* first, size_t count ) const;
+  bool operator()( Song& first, size_t count ) const;
 
 private:
   SongComparator mCompare;

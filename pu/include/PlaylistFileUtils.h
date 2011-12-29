@@ -48,6 +48,10 @@ inline bool beginsWith( const std::string& path, const char* beginning ) {
   return beginsWith(path, std::string(beginning));
 }
 
+inline void fileData(const std::string& path, size_t& length, std::string& artist, std::string& title) {
+  // TODO: Parse mp3 tag
+}
+
 class File {
 public:
   File( const char* source, const FileTraits& traits )

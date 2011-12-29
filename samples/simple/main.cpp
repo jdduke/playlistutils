@@ -72,12 +72,18 @@ int main(int argc, char** argv) {
     */
 
     // Lambdas
-    playlist->applyOp( [](const pu::SongPtr& song) {
-      std::cout << "Hello " << song->path() << std::endl;
+    playlist->applyOp( [](const pu::Song& song) {
+      std::cout << "Hello " << song.path() << std::endl;
     });
 
-    playlist->apply( [&comparator](pu::Song* start, size_t count) { 
-      std::sort(start, start + count, comparator); 
+    playlist->apply( [](pu::Song& start, size_t count) { 
+      std::sort(&start, &start + count, [](const pu::Song& s1, const pu::Song& s2) {
+        return std::strcmp( s1.path(), s2.path() ) < 0;
+      }); 
+    });
+
+    playlist->applyOp( [](const pu::Song& song) {
+      std::cout << "Goodbye " << song.path() << std::endl;
     });
   }
 

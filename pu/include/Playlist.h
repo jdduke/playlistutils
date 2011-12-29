@@ -19,52 +19,14 @@ namespace pu {
 class SongImpl;
 class PlaylistImpl;
 
-typedef std::unique_ptr<Song> SongPtr;
 typedef std::unique_ptr<PlaylistImpl,Releaser> PlaylistImplPtr;
 typedef std::unique_ptr<PlaylistImporter>      PlaylistImporterPtr;
 typedef std::unique_ptr<PlaylistExporter>      PlaylistExporterPtr;
 
-class SongImpl : public Song {
-public:
-  SongImpl(const SongImpl& other)
-    : mLength(other.mLength), mPath(other.mPath), mArtist(other.mArtist), mTitle(other.mTitle) { }
-  SongImpl(const SongImpl&& other)
-    : mLength(other.mLength), mPath(std::move(other.mPath)), mArtist(std::move(other.mArtist)), mTitle(std::move(other.mTitle)) { }
-  /*SongImpl(size_t length, const std::string&& path, const std::string&& artist, const std::string&& title )
-    : mLength(length), mPath(std::move(path)), mArtist(std::move(artist)), mTitle(std::move(title)) { }*/
-  SongImpl(size_t length, const std::string& path, const std::string& artist, const std::string& title )
-    : mLength(length), mPath(path), mArtist(artist), mTitle(title) { }
-  SongImpl(size_t length, const char* path, const char* artist = nullptr, const char* title = nullptr )
-    : mLength(length), mPath(path), mArtist(artist), mTitle(title) { }
-
-  size_t      length() const { return mLength; }
-  const char* path()   const { return mPath.c_str(); }
-  const char* artist() const { return mArtist.c_str(); }
-  const char* title()  const { return mTitle.c_str(); }
-
-protected:
-  size_t mLength;
-  std::string mPath, mArtist, mTitle;
-};
-
 class PlaylistImpl : public Playlist {
-public:
-  PlaylistImpl() { }
-  ~PlaylistImpl() { }
-
-  void release() {
-    delete this;
-  }
-
-  void        addSong(SongPtr&& song)  { if (song) mSongs.push_back( std::move(song) ); }
-  void        addSong(Song* song)      { addSong( SongPtr(song) ); }
-  size_t      songCount() const        { return mSongs.size(); }
-  const Song& song(size_t index) const { assert(index < songCount()); return *mSongs[index]; }
-
-private:
-  DISALLOW_COPY_AND_ASSIGN(PlaylistImpl);
+//public:
+  //PlaylistImpl() : Playlist() { }
 };
-
 
 class PlaylistManagerImpl : public PlaylistManager {
 public:
@@ -110,8 +72,8 @@ public:
 
       // Write playlist song info
       //  Umm.... lambdas are nice
-      playlist.applyOp( [&]( const SongPtr& song ) {
-        ofs << exporter( *song );
+      playlist.applyOp( [&]( const Song& song ) {
+        ofs << exporter( song );
       });
 
       // Write playlist end

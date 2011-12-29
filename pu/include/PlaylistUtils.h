@@ -45,20 +45,20 @@ public:
 
   bool hasNext( ) const { return !mSongs.empty(); }
 
-  SongPtr next( ) { 
-    SongPtr val;
+  Song next( ) { 
     if ( hasNext() ) {
-      val.reset( mSongs.front().release() );
+      Song song(mSongs.front());
       mSongs.pop_front();
+      return song;
     }
-    return val;
+    return Song();
   }
 
 protected:
-  std::deque<SongPtr> mSongs;
+  std::deque<Song> mSongs;
 };
 
-static inline std::string&& trim(const std::string& str) {
+static inline std::string trim(const std::string& str) {
   std::string temp(str);
   auto pos = temp.find_last_not_of(' ');
   if (pos != std::string::npos) {

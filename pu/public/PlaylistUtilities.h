@@ -9,79 +9,90 @@
 
 #include <PlaylistCommon.h>
 #include <algorithm>
-#include <memory>
 #include <vector>
 
 namespace pu {
 
-class PU_API Song {
+///////////////////////////////////////////////////////////////////////////
+
+class Song {
 public:
   enum {
     INVALID_LENGTH = ((size_t)-1)
   };
-  
-  virtual ~Song() { }
-  virtual size_t      length() const { return INVALID_LENGTH; }
-  virtual const char* artist() const { return ""; }
-  virtual const char* path()   const { return ""; }
-  virtual const char* title()  const { return ""; }
+
+  Song() : mLength(INVALID_LENGTH) { }
+  Song(const char* path);
+
+  size_t      length() const { return mLength; }
+  const char* path()   const { return mPath.c_str(); }
+  const char* artist() const { return mArtist.c_str(); }
+  const char* title()  const { return mTitle.c_str(); }
+
+protected:
+  size_t mLength;
+  std::string mPath, mArtist, mTitle;
 };
 
-typedef std::unique_ptr<Song> SongPtr;
+///////////////////////////////////////////////////////////////////////////
 
-class PU_API Playlist {
+class Playlist {
 public:
+
   ///////////////////////////////////////////////////////////////////////////
 
-  virtual ~Playlist() { }
+  void release() {
+    delete this;
+  }
 
-  virtual void release() = 0;
-
-  virtual void        addSong(Song*)           = 0;
-  virtual size_t      songCount() const        = 0;
-  virtual const Song& song(size_t index) const = 0;
+  void addSong(const Song& song) {
+    mSongs.push_back(song);
+  }
+  void addSong(const Song&& song) {
+    mSongs.push_back(std::move(song));
+  }
+  size_t songCount() const {
+    return mSongs.size();
+  }
+  const Song& song(size_t index) const {
+    return mSongs[index];
+  }
 
   ///////////////////////////////////////////////////////////////////////////
 
   template<class Op> inline void apply( const Op& op ) const {
     if (songCount() > 0 ) {
-      op( first()->get(), last() - first() );
+      op( *mSongs.begin(), songCount() );
     }
   }
 
   template<class Op> inline void apply( const Op& op ) {
     if (songCount() > 0 ) {
-      op( first()->get(), last() - first() );
+      op( *mSongs.begin(), songCount() );
     }
   }
 
   template<class Op> inline void applyOp( const Op& op ) const {
-    std::for_each( first(), last(), op);
+    std::for_each( mSongs.begin(), mSongs.end(), op);
   }
 
   template<class Op> inline void applyOp( const Op& op ) {
-    std::for_each( first(), last(), op);
+    std::for_each( mSongs.begin(), mSongs.end(), op);
   }
 
+  ///////////////////////////////////////////////////////////////////////////
+
 protected:
-/*  virtual Song* first()             = 0;
-  virtual const Song* first() const = 0;
+  Playlist() { }
+  DISALLOW_COPY_AND_ASSIGN(Playlist);
 
-  virtual Song* last()              = 0;
-  virtual const Song* last() const  = 0;*/
-
-  typedef std::vector< SongPtr > Songs;
-
-  inline       Songs::iterator first()       { return mSongs.begin(); }
-  inline Songs::const_iterator first() const { return mSongs.begin(); }
-
-  inline       Songs::iterator last()       { return mSongs.end(); }
-  inline Songs::const_iterator last() const { return mSongs.end(); }
-
+  typedef std::vector< Song > Songs;
   Songs mSongs;
 };
 
 typedef std::unique_ptr<Playlist,Releaser> PlaylistPtr;
+
+///////////////////////////////////////////////////////////////////////////
 
 class PU_API PlaylistImporter {
 public:
@@ -94,6 +105,8 @@ public:
   virtual ~PlaylistExporter() { }
   virtual bool operator()(const Playlist& playlist, const char* fileName) const = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////
 
 class PU_API PlaylistManager {
 public:
@@ -109,6 +122,8 @@ public:
   virtual bool supportsExport(const char* extension) const = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////
+
 class PU_API SongComparator {
 public:
   SongComparator() { }
@@ -117,6 +132,8 @@ public:
     return std::strcmp( song1.title(), song2.title() ) < 0;
   }
 };
+
+///////////////////////////////////////////////////////////////////////////
 
 PU_API PlaylistManager& playlistManager();
 

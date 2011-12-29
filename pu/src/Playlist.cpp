@@ -20,6 +20,10 @@ PlaylistManager& playlistManager() {
   return playlistManager;
 }
 
+Song::Song(const char* path) : mLength(INVALID_LENGTH), mPath(path) {
+  fileData(mPath, mLength, mArtist, mTitle);
+}
+
 }
 
 using namespace pu;
