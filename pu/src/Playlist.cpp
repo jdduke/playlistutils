@@ -21,44 +21,19 @@ PlaylistModule& playlistModule() {
   return playlistModule;
 }
 
-Song::Song(const char* path) : mLength(INVALID_LENGTH), mPath(path) {
-  fileData(mPath, mLength, mArtist, mTitle);
-}
-
-void PlaylistModuleImpl::setFileHandler( FileHandler* handler ) {
-  mFileHandler.reset( handler );
-}
-
-const FileHandler& PlaylistModuleImpl::fileHandler() const {
-  static StdFileHandler defaultHandler;
-  return mFileHandler ? *mFileHandler : defaultHandler;
-}
-
-void PlaylistModuleImpl::setXmlHandler( XmlHandler* handler ) {
-  mXmlHandler.reset( handler );
-}
-
-const XmlHandler& PlaylistModuleImpl::xmlHandler() const {
-  static StdXmlHandler defaultHandler;
-  return mXmlHandler ? *mXmlHandler : defaultHandler;
-}
-
-void PlaylistModuleImpl::setLogHandler( LogHandler* handler ) {
-  mLogHandler.reset( handler );
-}
-
-const LogHandler& PlaylistModuleImpl::logHandler() const {
-  static StdLogHandler defaultHandler;
-  return mLogHandler ? *mLogHandler : defaultHandler;
-}
-
-
 }
 
 using namespace pu;
 
-static inline std::string extensionOf( const char* fileName ) {
-  return File::fileExtension( fileName );
+Song::Song(const char* path) : mLength(INVALID_LENGTH), mPath(path) {
+  fileData(mPath, mLength, mArtist, mTitle);
+}
+
+///////////////////////////////////////////////////////////////////////////
+
+PlaylistModuleImpl::PlaylistModuleImpl()
+  : mFileHandler(nullptr), mXmlHandler(nullptr), mLogHandler(nullptr) {
+    loadDefaults(); 
 }
 
 void PlaylistModuleImpl::loadDefaults() {
@@ -121,3 +96,31 @@ bool PlaylistModuleImpl::registerExporter( PlaylistExporter* exporter, const cha
 bool PlaylistModuleImpl::supportsExport( const char* extension ) const {
   return nullptr != getExporter( extension );
 }
+
+void PlaylistModuleImpl::setFileHandler( FileHandler* handler ) {
+  mFileHandler = handler;
+}
+
+const FileHandler& PlaylistModuleImpl::fileHandler() const {
+  static StdFileHandler defaultHandler;
+  return mFileHandler ? *mFileHandler : defaultHandler;
+}
+
+void PlaylistModuleImpl::setXmlHandler( XmlHandler* handler ) {
+  mXmlHandler = handler;
+}
+
+const XmlHandler& PlaylistModuleImpl::xmlHandler() const {
+  static StdXmlHandler defaultHandler;
+  return mXmlHandler ? *mXmlHandler : defaultHandler;
+}
+
+void PlaylistModuleImpl::setLogHandler( LogHandler* handler ) {
+  mLogHandler = handler;
+}
+
+const LogHandler& PlaylistModuleImpl::logHandler() const {
+  static StdLogHandler defaultHandler;
+  return mLogHandler ? *mLogHandler : defaultHandler;
+}
+

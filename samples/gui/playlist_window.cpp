@@ -1,6 +1,14 @@
-#include <QtGui>
+/////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2011, Jared Duke.
+// This code is released under the MIT License.
+// www.opensource.org/licenses/mit-license.php
+/////////////////////////////////////////////////////////////////////////////
 
 #include "playlist_window.h"
+#include "playlist_utils.h"
+#include "utils.h"
+
+#include <QtGui>
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -23,6 +31,10 @@ PlaylistWindow::PlaylistWindow() {
 
   QGridLayout *mainLayout = new QGridLayout;
   setLayout(mainLayout);	
+
+  lconnect(this, SIGNAL(testLambda()), [](){
+    qDebug() << "This is only a test\n";
+  });
   /*
   mainLayout->addWidget(a.mButton, 0, 0, 2, 1);
   mainLayout->addWidget(a.mComboBox, 2, 0, 1, 1);

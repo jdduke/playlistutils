@@ -15,7 +15,6 @@ namespace pu {
 class StdFileHandler : public FileHandler {
 public:
   StdFileHandler() { }
-  void release() { delete this; }
   bool copy(  const char* sourcePath, const char* destPath) const;
   bool rename(const char* sourcePath, const char* destName) const;
   bool move(  const char* sourcePath, const char* destPath) const;
@@ -27,7 +26,6 @@ public:
 class StdXmlHandler : public XmlHandler {
 public:
   StdXmlHandler() { }
-  void release() { delete this; }
   void load( std::ifstream& ifs ) { }
   void nextElement() { }
   void hasNextElement() const { }
@@ -37,7 +35,6 @@ public:
 class StdLogHandler : public LogHandler {
 public:
   StdLogHandler() { }
-  virtual void release() { delete this; }
   virtual void operator()( const char* msg, LogLevel level ) const { }
 };
 

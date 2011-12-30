@@ -23,18 +23,15 @@ typedef std::unique_ptr<PlaylistImpl,    Releaser> PlaylistImplPtr;
 typedef std::unique_ptr<PlaylistImporter,Releaser> PlaylistImporterPtr;
 typedef std::unique_ptr<PlaylistExporter,Releaser> PlaylistExporterPtr;
 
-typedef std::unique_ptr<FileHandler,Releaser> FileHandlerPtr;
-typedef std::unique_ptr<XmlHandler, Releaser> XmlHandlerPtr;
-typedef std::unique_ptr<LogHandler, Releaser> LogHandlerPtr;
-
 class PlaylistImpl : public Playlist {
-//public:
-  //PlaylistImpl() : Playlist() { }
+
 };
 
 class PlaylistModuleImpl : public PlaylistModule {
 public:
-  PlaylistModuleImpl() { loadDefaults(); }
+  PlaylistModuleImpl();
+
+  ///////////////////////////////////////////////////////////////////////////
 
   PlaylistPtr importFromFile(const char* fileName) const;
   bool        exportToFile(const Playlist& playlist, const char* fileName) const;
@@ -56,11 +53,18 @@ public:
   void setLogHandler(LogHandler*);
   const LogHandler& logHandler() const;
 
+  ///////////////////////////////////////////////////////////////////////////
+
 private:
+
   void loadDefaults();
+
+  ///////////////////////////////////////////////////////////////////////////
 
   const PlaylistImporter* getImporter(const std::string& extension) const;
   const PlaylistExporter* getExporter(const std::string& extension) const;
+
+  ///////////////////////////////////////////////////////////////////////////
 
   typedef std::unordered_map<std::string, PlaylistExporterPtr> ExporterMap;
   typedef std::unordered_map<std::string, PlaylistImporterPtr> ImporterMap;
@@ -68,10 +72,12 @@ private:
   ExporterMap mExporters;
   ImporterMap mImporters;
 
-  FileHandlerPtr mFileHandler;
-  XmlHandlerPtr  mXmlHandler;
-  LogHandlerPtr  mLogHandler;
+  FileHandler* mFileHandler;
+  XmlHandler*  mXmlHandler;
+  LogHandler*  mLogHandler;
 };
+
+///////////////////////////////////////////////////////////////////////////
 
 template< class Exporter >
 class PlaylistExporterImpl : public PlaylistExporter {
@@ -107,6 +113,8 @@ public:
 private:
   Exporter mExporter;
 };
+
+///////////////////////////////////////////////////////////////////////////
 
 template< class Importer >
 class PlaylistImporterImpl : public PlaylistImporter {

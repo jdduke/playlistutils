@@ -1,3 +1,9 @@
+/////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2011, Jared Duke.
+// This code is released under the MIT License.
+// www.opensource.org/licenses/mit-license.php
+/////////////////////////////////////////////////////////////////////////////
+
 #ifndef PLAYLIST_WINDOW_H
 #define PLAYLIST_WINDOW_H
 
@@ -23,6 +29,9 @@ public:
     PlaylistOp_Merge,
     PlaylistOp_Sort,
   };
+
+signals:
+  void testLambda();
 
 private slots:
   void executeOp();

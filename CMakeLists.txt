@@ -108,20 +108,6 @@ if(WIN32)
   endif()
 endif()
 
-
-SET(ENABLE_QT FALSE CACHE BOOL "Enable Qt usage")
-if(ENABLE_QT)
-  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_NO_DEBUG")
-  endif()
-  add_definitions("-DHAS_QT")
-  if(BUILD_SHARED_LIBS)
-    add_definitions("-DQT_DLL -DQWT_DLL")
-  else()
-    add_definitions("-DPU_STATIC -DQT_NODLL")
-  endif()
-endif()
-
 set(TICPP_LIB ticpp)
 
 include_directories(${PU_SOURCE_DIR}/pu/include)

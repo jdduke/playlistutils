@@ -93,6 +93,14 @@ protected:
   Songs mSongs;
 };
 
+class Releaser {
+public:
+  template< typename T>
+  void operator()(T* ptr) {
+    if( ptr ) { ptr->release(); }
+  }
+};
+
 typedef std::unique_ptr<Playlist,Releaser> PlaylistPtr;
 
 ///////////////////////////////////////////////////////////////////////////
@@ -116,7 +124,6 @@ public:
 class PU_API FileHandler {
 public:
   virtual ~FileHandler() { }
-  virtual void release() = 0;
   virtual bool copy(  const char* sourcePath, const char* destPath) const = 0;
   virtual bool rename(const char* sourcePath, const char* destName) const = 0;
   virtual bool move(  const char* sourcePath, const char* destPath) const = 0;
@@ -127,7 +134,6 @@ public:
 class PU_API XmlHandler {
 public:
   virtual ~XmlHandler() { }
-  virtual void release()                  = 0;
   virtual void load( std::ifstream& ifs ) = 0;
   virtual void nextElement( )             = 0;
   virtual void hasNextElement( ) const    = 0;
@@ -143,7 +149,6 @@ public:
     NUM_LEVELS
   };
   virtual ~LogHandler() { }
-  virtual void release() = 0;
   virtual void operator()(const char* msg, LogLevel level = INFO) const = 0;
 };
 
@@ -172,7 +177,7 @@ public:
   virtual const LogHandler& logHandler() const   = 0;
 };
 
-///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////f///////////////////
 
 class PU_API SongComparator {
 public:

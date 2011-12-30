@@ -1,8 +1,19 @@
+SET(ENABLE_QT FALSE CACHE BOOL "Enable Qt usage")
 if(ENABLE_QT)
+  SET(QT_STATIC FALSE CACHE BOOL "Use static QT libs")
 
   project(puGUI)
-
   find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+
+  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_NO_DEBUG")
+  endif()
+  add_definitions("-DHAS_QT")
+  if(QT_STATIC)
+    add_definitions("-DPU_STATIC -DQT_NODLL")
+  else()
+    add_definitions("-DQT_DLL -DQWT_DLL")
+  endif()
 
   file(GLOB puGUI_SOURCES *.cpp)
   file(GLOB puGUI_HEADERS *.h)

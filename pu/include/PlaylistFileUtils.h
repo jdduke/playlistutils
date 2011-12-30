@@ -145,6 +145,10 @@ private:
   const FileHandler& mHandler;
 };
 
+static inline std::string extensionOf( const char* fileName ) {
+  return File::fileExtension( fileName );
+}
+
 }
 
 #endif
