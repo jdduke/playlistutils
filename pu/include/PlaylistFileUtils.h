@@ -7,22 +7,11 @@
 #ifndef PLAYLIST_FILE_UTILS_H
 #define PLAYLIST_FILE_UTILS_H
 
-#include "PlaylistCommon.h"
+#include "PlaylistUtilities.h"
 
 #include <string>
 
 namespace pu {
-
-class PU_API FileTraits {
-public:
-  virtual ~FileTraits() { }
-  virtual bool copy(const char* sourcePath, const char* destPath) const   = 0;
-  virtual bool rename(const char* sourcePath, const char* destName) const = 0;
-  virtual bool remove(const char* sourcePath) const                       = 0;
-  virtual bool move(const char* sourcePath, const char* destPath) const   = 0;
-  virtual bool exists(const char* sourcePath) const                       = 0;
-};
-
 
 inline bool beginsWith( const std::string& path, const std::string& beginning ) {
   if (path.length() >= beginning.length()) {
@@ -54,14 +43,14 @@ inline void fileData(const std::string& path, size_t& length, std::string& artis
 
 class File {
 public:
-  File( const char* source, const FileTraits& traits )
+  File( const char* source, const FileHandler& handler = playlistModule().fileHandler() )
       : mDir( fileDir(source) ),
       mName( fileName(source) ),
       mPath( source ),
-      mTraits( traits ) { }
+      mHandler( handler ) { }
 
   bool rename( const char* destName ) {
-    if( mTraits.copy( mPath.c_str(), path(mPath, destName).c_str() ) ) {
+    if( mHandler.copy( mPath.c_str(), path(mPath, destName).c_str() ) ) {
       set( mDir.c_str(), destName );
       return true;
     }
@@ -69,11 +58,11 @@ public:
   }
 
   bool copy( const char* destDir ) const {
-    return mTraits.copy( mPath.c_str(), path(destDir, mName).c_str() );
+    return mHandler.copy( mPath.c_str(), path(destDir, mName).c_str() );
   }
 
   bool remove() {
-    if( mTraits.remove( mPath.c_str() ) ) {
+    if( mHandler.remove( mPath.c_str() ) ) {
       invalidate();
       return true;
     }
@@ -81,7 +70,7 @@ public:
   }
 
   bool move( const char* destDir ) {
-    if( mTraits.move( mPath.c_str(), path(destDir, mName).c_str() ) ) {
+    if( mHandler.move( mPath.c_str(), path(destDir, mName).c_str() ) ) {
       set(destDir, mName.c_str());
       return true;
     }
@@ -153,7 +142,7 @@ private:
   std::string mDir;
   std::string mName;
   std::string mPath;
-  const FileTraits& mTraits;
+  const FileHandler& mHandler;
 };
 
 }

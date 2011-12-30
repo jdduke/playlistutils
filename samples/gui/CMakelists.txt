@@ -1,0 +1,18 @@
+if(ENABLE_QT)
+
+  project(puGUI)
+
+  find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+
+  file(GLOB puGUI_SOURCES *.cpp)
+  file(GLOB puGUI_HEADERS *.h)
+
+  qt4_wrap_cpp(puGUI_HEADERS_MOC ${puGUI_HEADERS})
+
+  include(${QT_USE_FILE})
+  add_definitions(${QT_DEFINITIONS})
+
+  add_executable(puGUI ${puGUI_SOURCES} ${puGUI_HEADERS} ${puGUI_HEADERS_MOC})
+  target_link_libraries(puGUI ${QT_LIBRARIES})
+
+endif()

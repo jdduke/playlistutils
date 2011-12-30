@@ -13,7 +13,7 @@
 namespace pu {
 
 class File;
-class FileTraits;
+class FileHandler;
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +75,7 @@ private:
 
 class PU_API CopySongOp : public ConstSongOp {
 public:
-  CopySongOp( const char* destDir, const FileTraits& traits, const OpListener& listener = OpListener() );
+  CopySongOp( const char* destDir, const FileHandler& traits, const OpListener& listener = OpListener() );
 
   bool operator()( const Song& song ) const;
 
@@ -84,7 +84,7 @@ private:
   inline std::string opName( const File& file ) const;
 
   const char* mDestDir;
-  const FileTraits& mTraits;
+  const FileHandler& mTraits;
   OpListener mListener;
 };
 
@@ -92,7 +92,7 @@ private:
 
 class PU_API MoveSongOp : public SongOp {
 public:
-  MoveSongOp( const char* destDir, const FileTraits& traits, const OpListener& listener = OpListener() );
+  MoveSongOp( const char* destDir, const FileHandler& traits, const OpListener& listener = OpListener() );
 
   bool operator()( Song& song );
 
@@ -101,7 +101,7 @@ private:
   inline std::string opName( const File& file ) const;
 
   const char* mDestDir;
-  const FileTraits& mTraits;
+  const FileHandler& mTraits;
   OpListener mListener;
 };
 
@@ -109,7 +109,7 @@ private:
 
 class PU_API DeleteSongOp : public SongOp {
 public:
-  DeleteSongOp( const FileTraits& traits, const OpListener& listener = OpListener() );
+  DeleteSongOp( const FileHandler& traits, const OpListener& listener = OpListener() );
 
   bool operator()( Song& song );
 
@@ -117,7 +117,7 @@ private:
   DISALLOW_COPY_AND_ASSIGN(DeleteSongOp);
   inline std::string opName( const File& file ) const;
 
-  const FileTraits& mTraits;
+  const FileHandler& mTraits;
   OpListener mListener;
 };
 

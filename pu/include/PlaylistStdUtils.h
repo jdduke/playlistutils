@@ -12,14 +12,33 @@
 
 namespace pu {
 
-class PU_API StdFileTraits : public FileTraits {
+class StdFileHandler : public FileHandler {
 public:
-  virtual bool copy(const char* sourcePath, const char* destPath) const;
-  virtual bool rename(const char* sourcePath, const char* destName) const;
-  virtual bool remove(const char* sourcePath) const;
-  virtual bool move(const char* sourcePath, const char* destPath) const;
-  virtual bool exists(const char* sourcePath) const;
+  StdFileHandler() { }
+  void release() { delete this; }
+  bool copy(  const char* sourcePath, const char* destPath) const;
+  bool rename(const char* sourcePath, const char* destName) const;
+  bool move(  const char* sourcePath, const char* destPath) const;
+  bool remove(const char* sourcePath) const;
+  bool exists(const char* sourcePath) const;
+};
 
+// TODO: Implement
+class StdXmlHandler : public XmlHandler {
+public:
+  StdXmlHandler() { }
+  void release() { delete this; }
+  void load( std::ifstream& ifs ) { }
+  void nextElement() { }
+  void hasNextElement() const { }
+};
+
+//TODO: Implement
+class StdLogHandler : public LogHandler {
+public:
+  StdLogHandler() { }
+  virtual void release() { delete this; }
+  virtual void operator()( const char* msg, LogLevel level ) const { }
 };
 
 }

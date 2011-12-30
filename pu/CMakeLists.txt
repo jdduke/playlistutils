@@ -11,5 +11,5 @@ source_group(Public FILES ${PU_PUBLIC})
 if(BUILD_SHARED_LIBS)
   add_definitions(-DPU_EXPORTS)
 endif()
+
 add_library(pu ${PU_PUBLIC} ${PU_HEADERS} ${PU_SOURCES})
-target_link_libraries(pu ${QT_QTCORE_LIBRARY} ${TICPP_LIB})

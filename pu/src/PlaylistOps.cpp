@@ -11,7 +11,7 @@ using namespace pu;
 
 ///////////////////////////////////////////////////////////////////////////
 
-CopySongOp::CopySongOp( const char* destDir, const FileTraits& traits, const OpListener& listener )
+CopySongOp::CopySongOp( const char* destDir, const FileHandler& traits, const OpListener& listener )
     : mDestDir(destDir), mTraits( traits ), mListener( listener ) { }
 
 bool CopySongOp::operator()( const Song& song ) const {
@@ -32,7 +32,7 @@ std::string CopySongOp::opName( const File& file ) const {
 
 ///////////////////////////////////////////////////////////////////////////
 
-MoveSongOp::MoveSongOp( const char* destDir, const FileTraits& traits, const OpListener& listener )
+MoveSongOp::MoveSongOp( const char* destDir, const FileHandler& traits, const OpListener& listener )
   : mDestDir(destDir), mTraits( traits ), mListener( listener ) { }
 
 bool MoveSongOp::operator()( Song& song ) {
@@ -53,7 +53,7 @@ std::string MoveSongOp::opName( const File& file ) const {
 
 ///////////////////////////////////////////////////////////////////////////
 
-DeleteSongOp::DeleteSongOp( const FileTraits& traits, const OpListener& listener )
+DeleteSongOp::DeleteSongOp( const FileHandler& traits, const OpListener& listener )
     : mTraits( traits ), mListener( listener ) { }
 
 bool DeleteSongOp::operator()( Song& song ) {

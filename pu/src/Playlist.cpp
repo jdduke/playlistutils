@@ -7,6 +7,7 @@
 #include "Playlist.h"
 
 #include "PlaylistFileUtils.h"
+#include "PlaylistStdUtils.h"
 
 #include "PlaylistM3U.h"
 #include "PlaylistPLS.h"
@@ -15,14 +16,42 @@
 
 namespace pu {
 
-PlaylistManager& playlistManager() {
-  static PlaylistManagerImpl playlistManager;
-  return playlistManager;
+PlaylistModule& playlistModule() {
+  static PlaylistModuleImpl playlistModule;
+  return playlistModule;
 }
 
 Song::Song(const char* path) : mLength(INVALID_LENGTH), mPath(path) {
   fileData(mPath, mLength, mArtist, mTitle);
 }
+
+void PlaylistModuleImpl::setFileHandler( FileHandler* handler ) {
+  mFileHandler.reset( handler );
+}
+
+const FileHandler& PlaylistModuleImpl::fileHandler() const {
+  static StdFileHandler defaultHandler;
+  return mFileHandler ? *mFileHandler : defaultHandler;
+}
+
+void PlaylistModuleImpl::setXmlHandler( XmlHandler* handler ) {
+  mXmlHandler.reset( handler );
+}
+
+const XmlHandler& PlaylistModuleImpl::xmlHandler() const {
+  static StdXmlHandler defaultHandler;
+  return mXmlHandler ? *mXmlHandler : defaultHandler;
+}
+
+void PlaylistModuleImpl::setLogHandler( LogHandler* handler ) {
+  mLogHandler.reset( handler );
+}
+
+const LogHandler& PlaylistModuleImpl::logHandler() const {
+  static StdLogHandler defaultHandler;
+  return mLogHandler ? *mLogHandler : defaultHandler;
+}
+
 
 }
 
@@ -32,23 +61,23 @@ static inline std::string extensionOf( const char* fileName ) {
   return File::fileExtension( fileName );
 }
 
-void PlaylistManagerImpl::loadDefaults() {
+void PlaylistModuleImpl::loadDefaults() {
   registerImporter(new PlaylistImporterImpl<PlaylistM3UImport>(), "m3u");
   registerExporter(new PlaylistExporterImpl<PlaylistM3UExport>(), "m3u");
   // TODO: Implement pls/wmpl/zpl playlist importer/exporters  
 }
 
-const PlaylistImporter* PlaylistManagerImpl::getImporter( const std::string& extension ) const {
+const PlaylistImporter* PlaylistModuleImpl::getImporter( const std::string& extension ) const {
   auto it = mImporters.find( extension );
   return (it != mImporters.end()) ? it->second.get() : nullptr;
 }
 
-const PlaylistExporter* PlaylistManagerImpl::getExporter( const std::string& extension ) const {
+const PlaylistExporter* PlaylistModuleImpl::getExporter( const std::string& extension ) const {
   auto it = mExporters.find( extension );
   return (it != mExporters.end()) ? it->second.get() : nullptr;
 }
 
-pu::PlaylistPtr PlaylistManagerImpl::importFromFile( const char* fileName ) const {
+pu::PlaylistPtr PlaylistModuleImpl::importFromFile( const char* fileName ) const {
   PlaylistPtr playlist;
   auto importer( getImporter( extensionOf(fileName) ) );
   if ( importer ) {
@@ -57,7 +86,7 @@ pu::PlaylistPtr PlaylistManagerImpl::importFromFile( const char* fileName ) cons
   return playlist;
 }
 
-bool PlaylistManagerImpl::exportToFile( const Playlist& playlist, const char* fileName ) const {
+bool PlaylistModuleImpl::exportToFile( const Playlist& playlist, const char* fileName ) const {
   bool success = false;
   auto exporter( getExporter( extensionOf(fileName) ) );
   if ( exporter ) {
@@ -66,7 +95,7 @@ bool PlaylistManagerImpl::exportToFile( const Playlist& playlist, const char* fi
   return success;
 }
 
-bool PlaylistManagerImpl::registerImporter( PlaylistImporter* importer, const char* extension ) {
+bool PlaylistModuleImpl::registerImporter( PlaylistImporter* importer, const char* extension ) {
   assert(nullptr != importer && "Invalid importer.");
   bool importerExists = supportsImport( extension );
   if ( importer ) {
@@ -75,11 +104,11 @@ bool PlaylistManagerImpl::registerImporter( PlaylistImporter* importer, const ch
   return importerExists;
 }
 
-bool PlaylistManagerImpl::supportsImport( const char* extension ) const {
+bool PlaylistModuleImpl::supportsImport( const char* extension ) const {
   return nullptr != getImporter( extension );
 }
 
-bool PlaylistManagerImpl::registerExporter( PlaylistExporter* exporter, const char* extension ) {
+bool PlaylistModuleImpl::registerExporter( PlaylistExporter* exporter, const char* extension ) {
   assert(nullptr != exporter && "Invalid exporter.");
   bool exporterExists = supportsExport( extension );
   if (exporter) {
@@ -89,6 +118,6 @@ bool PlaylistManagerImpl::registerExporter( PlaylistExporter* exporter, const ch
   return exporterExists;
 }
 
-bool PlaylistManagerImpl::supportsExport( const char* extension ) const {
+bool PlaylistModuleImpl::supportsExport( const char* extension ) const {
   return nullptr != getExporter( extension );
 }

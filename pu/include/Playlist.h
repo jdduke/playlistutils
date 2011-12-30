@@ -19,18 +19,22 @@ namespace pu {
 class SongImpl;
 class PlaylistImpl;
 
-typedef std::unique_ptr<PlaylistImpl,Releaser> PlaylistImplPtr;
-typedef std::unique_ptr<PlaylistImporter>      PlaylistImporterPtr;
-typedef std::unique_ptr<PlaylistExporter>      PlaylistExporterPtr;
+typedef std::unique_ptr<PlaylistImpl,    Releaser> PlaylistImplPtr;
+typedef std::unique_ptr<PlaylistImporter,Releaser> PlaylistImporterPtr;
+typedef std::unique_ptr<PlaylistExporter,Releaser> PlaylistExporterPtr;
+
+typedef std::unique_ptr<FileHandler,Releaser> FileHandlerPtr;
+typedef std::unique_ptr<XmlHandler, Releaser> XmlHandlerPtr;
+typedef std::unique_ptr<LogHandler, Releaser> LogHandlerPtr;
 
 class PlaylistImpl : public Playlist {
 //public:
   //PlaylistImpl() : Playlist() { }
 };
 
-class PlaylistManagerImpl : public PlaylistManager {
+class PlaylistModuleImpl : public PlaylistModule {
 public:
-  PlaylistManagerImpl() { loadDefaults(); }
+  PlaylistModuleImpl() { loadDefaults(); }
 
   PlaylistPtr importFromFile(const char* fileName) const;
   bool        exportToFile(const Playlist& playlist, const char* fileName) const;
@@ -40,6 +44,17 @@ public:
 
   bool registerExporter(PlaylistExporter* exporter, const char* extension);
   bool supportsExport(const char* extension) const;
+
+  ///////////////////////////////////////////////////////////////////////////
+
+  void setFileHandler(FileHandler*);
+  const FileHandler& fileHandler() const;
+
+  void setXmlHandler(XmlHandler*);
+  const XmlHandler& xmlHandler() const;
+
+  void setLogHandler(LogHandler*);
+  const LogHandler& logHandler() const;
 
 private:
   void loadDefaults();
@@ -52,6 +67,10 @@ private:
 
   ExporterMap mExporters;
   ImporterMap mImporters;
+
+  FileHandlerPtr mFileHandler;
+  XmlHandlerPtr  mXmlHandler;
+  LogHandlerPtr  mLogHandler;
 };
 
 template< class Exporter >
@@ -59,6 +78,8 @@ class PlaylistExporterImpl : public PlaylistExporter {
 public:
   PlaylistExporterImpl( const Exporter& exporter = Exporter() ) 
     : mExporter( exporter ) { }
+
+  void release() { delete this; }
 
   bool operator()(const Playlist& playlist, const char* fileName) const {
     bool success = false;
@@ -90,6 +111,7 @@ private:
 template< class Importer >
 class PlaylistImporterImpl : public PlaylistImporter {
 public:
+  void release() { delete this; }
   PlaylistPtr operator()(const char* fileName) const {
     PlaylistImplPtr playlist( new PlaylistImpl() );
     std::ifstream ifs( fileName );

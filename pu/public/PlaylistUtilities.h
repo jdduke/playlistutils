@@ -8,7 +8,10 @@
 #define PLAYLIST_UTILITIES_H
 
 #include <PlaylistCommon.h>
+
+#include <iosfwd>
 #include <algorithm>
+#include <string>
 #include <vector>
 
 namespace pu {
@@ -97,20 +100,58 @@ typedef std::unique_ptr<Playlist,Releaser> PlaylistPtr;
 class PU_API PlaylistImporter {
 public:
   virtual ~PlaylistImporter() { }
+  virtual void release() = 0;
   virtual PlaylistPtr operator()(const char* fileName) const = 0;
 };
 
 class PU_API PlaylistExporter {
 public:
   virtual ~PlaylistExporter() { }
+  virtual void release() = 0;
   virtual bool operator()(const Playlist& playlist, const char* fileName) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
-class PU_API PlaylistManager {
+class PU_API FileHandler {
 public:
-  virtual ~PlaylistManager() { }
+  virtual ~FileHandler() { }
+  virtual void release() = 0;
+  virtual bool copy(  const char* sourcePath, const char* destPath) const = 0;
+  virtual bool rename(const char* sourcePath, const char* destName) const = 0;
+  virtual bool move(  const char* sourcePath, const char* destPath) const = 0;
+  virtual bool remove(const char* sourcePath) const                       = 0;
+  virtual bool exists(const char* sourcePath) const                       = 0;
+};
+
+class PU_API XmlHandler {
+public:
+  virtual ~XmlHandler() { }
+  virtual void release()                  = 0;
+  virtual void load( std::ifstream& ifs ) = 0;
+  virtual void nextElement( )             = 0;
+  virtual void hasNextElement( ) const    = 0;
+};
+
+class PU_API LogHandler {
+public:
+  enum LogLevel {
+    INFO = 0,
+    WARNING,
+    ERROR,
+    CRITICAL,
+    NUM_LEVELS
+  };
+  virtual ~LogHandler() { }
+  virtual void release() = 0;
+  virtual void operator()(const char* msg, LogLevel level = INFO) const = 0;
+};
+
+///////////////////////////////////////////////////////////////////////////
+
+class PU_API PlaylistModule {
+public:
+  virtual ~PlaylistModule() { }
 
   virtual PlaylistPtr importFromFile(const char* fileName) const = 0;
   virtual bool        exportToFile(const Playlist& playlist, const char* fileName) const = 0;
@@ -120,6 +161,15 @@ public:
 
   virtual bool registerExporter(PlaylistExporter* exporter, const char* extension) = 0;
   virtual bool supportsExport(const char* extension) const = 0;
+
+  virtual void setFileHandler(FileHandler*)      = 0;
+  virtual const FileHandler& fileHandler() const = 0;
+
+  virtual void setXmlHandler(XmlHandler*)        = 0;
+  virtual const XmlHandler& xmlHandler() const   = 0;
+
+  virtual void setLogHandler(LogHandler*)        = 0;
+  virtual const LogHandler& logHandler() const   = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -135,7 +185,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////
 
-PU_API PlaylistManager& playlistManager();
+PU_API PlaylistModule& playlistModule();
 
 }
 

@@ -27,13 +27,13 @@ public:
 int main(int argc, char** argv) {
 
   
-  pu::PlaylistManager& manager = pu::playlistManager();
+  pu::PlaylistModule& module = pu::playlistModule();
   pu::PlaylistPtr playlist;
 
   if ( argc <= 1 ) {
-     playlist = manager.importFromFile("test.m3u");
+     playlist = module.importFromFile("test.m3u");
   } else {
-    playlist = manager.importFromFile(argv[1]);
+    playlist = module.importFromFile(argv[1]);
   }
   
   if ( playlist && playlist->songCount() > 0 ) {
@@ -41,7 +41,6 @@ int main(int argc, char** argv) {
     ///////////////////////////////////////////////////////////////////////////
 
     pu::SongComparator comparator;
-    pu::StdFileTraits traits;
     CommandLineListener listener;
 
     /*
