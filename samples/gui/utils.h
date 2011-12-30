@@ -12,24 +12,43 @@
 
 #include <functional>
 
-class connect_functor_helper : public QObject {
+class connect_functor : public QObject {
   Q_OBJECT
 public:
-  connect_functor_helper(QObject *parent, const std::function<void()>& f_) 
-    : QObject(parent), f(f_) { }
+  connect_functor(QObject *parent) 
+    : QObject(parent) { }
 
 public Q_SLOTS:
   void signaled() {
-    f();
+    fImpl();
   }
 
-private:
-  std::function<void()> f;
+protected:
+  virtual void fImpl() = 0;
 };
 
 template <class T>
-inline bool lconnect(QObject *sender, const char *signal, const T &reciever, Qt::ConnectionType type = Qt::AutoConnection) {
-  return QObject::connect(sender, signal, new connect_functor_helper(sender, reciever), SLOT(signaled()), type);
+class connect_functor_helper : public connect_functor {
+public:
+  connect_functor_helper(QObject* parent, T&& f_)
+    : connect_functor(parent), f(std::move(f_)) { }
+  connect_functor_helper(QObject* parent, const T& f_)
+    : connect_functor(parent), f(f_) { }
+
+  void fImpl() { f(); }
+
+private:
+  T f;
+};
+
+template <class T>
+inline bool lconnect(QObject* sender, const char* signal, const T& reciever, Qt::ConnectionType type = Qt::AutoConnection) {
+  return QObject::connect(sender, signal, new connect_functor_helper<T>(sender, reciever), SLOT(signaled()), type);
+}
+
+template <class T>
+inline bool lconnect(QObject* sender, const char* signal, T&& reciever, Qt::ConnectionType type = Qt::AutoConnection) {
+  return QObject::connect(sender, signal, new connect_functor_helper<T>(sender, reciever), SLOT(signaled()), type);
 }
 
 #endif
