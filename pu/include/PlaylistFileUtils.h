@@ -88,13 +88,13 @@ public:
 
   inline static std::string fileName( const char* path ) {
     std::string filePath(path);
-    size_t p0 = filePath.find_last_of("/\\") + 1;
+    auto p0 = filePath.find_last_of("/\\") + 1;
     return filePath.substr(p0);
   }
 
   inline static std::string fileExtension( const char* path ) {
     std::string file( fileName(path) );
-    size_t p0 = file.find_last_of(".");
+    auto p0 = file.find_last_of(".");
     if ( p0 != std::string::npos ) {
       return file.substr(p0 + 1);
     }

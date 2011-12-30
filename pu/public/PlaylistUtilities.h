@@ -48,6 +48,9 @@ public:
     delete this;
   }
 
+  void addSong(const char* path) {
+    mSongs.emplace_back(path);
+  }
   void addSong(const Song& song) {
     mSongs.push_back(song);
   }
@@ -65,13 +68,13 @@ public:
 
   template<class Op> inline void apply( const Op& op ) const {
     if (songCount() > 0 ) {
-      op( *mSongs.begin(), songCount() );
+      op( mSongs.data(), mSongs.data() + songCount() );
     }
   }
 
   template<class Op> inline void apply( const Op& op ) {
     if (songCount() > 0 ) {
-      op( *mSongs.begin(), songCount() );
+      op( mSongs.data(), mSongs.data() + songCount() );
     }
   }
 

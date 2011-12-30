@@ -127,7 +127,7 @@ class PU_API SortSongsOp : public SongsOp {
 public:
   SortSongsOp( const SongComparator& compare = SongComparator(),  const OpListener& listener = OpListener() );
 
-  bool operator()( Song& first, size_t count ) const;
+  bool operator()( Song* first, Song* last ) const;
 
 private:
   SongComparator mCompare;

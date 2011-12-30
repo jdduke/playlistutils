@@ -88,9 +88,9 @@ public:
   void release() { delete this; }
 
   bool operator()(const Playlist& playlist, const char* fileName) const {
-    bool success = false;
+    auto success = false;
     std::ofstream ofs(fileName);
-    const Exporter& exporter = mExporter;
+    const auto& exporter = mExporter;
     if ( ofs ) {
       success = true;
 
@@ -129,7 +129,7 @@ public:
         playlist->addSong( it.next( ) );
       };
     }
-    return PlaylistPtr(playlist.release());
+    return PlaylistPtr(std::move(playlist));
   }
 };
 

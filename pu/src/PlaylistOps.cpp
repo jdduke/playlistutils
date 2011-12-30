@@ -17,7 +17,7 @@ CopySongOp::CopySongOp( const char* destDir, const FileHandler& traits, const Op
 bool CopySongOp::operator()( const Song& song ) const {
   File file( song.path(), mTraits );
   mListener.beginOp( opName(file).c_str() );
-  bool success = file.copy( mDestDir );
+  auto success = file.copy( mDestDir );
   mListener.endOp( success );
   return success;
 }
@@ -38,7 +38,7 @@ MoveSongOp::MoveSongOp( const char* destDir, const FileHandler& traits, const Op
 bool MoveSongOp::operator()( Song& song ) {
   File file( song.path(), mTraits );
   mListener.beginOp( opName(file).c_str() );
-  bool success = file.move( mDestDir );
+  auto success = file.move( mDestDir );
   mListener.endOp( success );
   return success;
 }
@@ -59,7 +59,7 @@ DeleteSongOp::DeleteSongOp( const FileHandler& traits, const OpListener& listene
 bool DeleteSongOp::operator()( Song& song ) {
   File file( song.path(), mTraits );
   mListener.beginOp( opName(file).c_str() );
-  bool success = file.remove();
+  auto success = file.remove();
   mListener.endOp( success );
   return success;
 }
@@ -77,9 +77,9 @@ SortSongsOp::SortSongsOp( const SongComparator& compare /*= SongComparator() */,
 
 }
 
-bool SortSongsOp::operator()( Song& first, size_t count ) const {
+bool SortSongsOp::operator()( Song* first, Song* last ) const {
   mListener.beginOp( "Sorting..." );
-  std::sort(&first, &first + count, mCompare);
+  std::sort(first, last, mCompare);
   mListener.endOp( true );
   return true;
 }

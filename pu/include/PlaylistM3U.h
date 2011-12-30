@@ -48,7 +48,7 @@ public:
             line.find_first_of("\\\\") != std::string::npos) {
           //mSongs.push_back( Song(0, trim(line), std::string(), std::string()) );
           //mSongs.push_back( Song(0, line.c_str(), "", "") );
-          mSongs.push_back( Song(line.c_str()) );
+          mSongs.emplace_back(line.c_str());
         }
       }
     }

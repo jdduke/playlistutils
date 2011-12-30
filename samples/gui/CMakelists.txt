@@ -3,7 +3,7 @@ if(ENABLE_QT)
   SET(QT_STATIC FALSE CACHE BOOL "Use static QT libs")
 
   project(puGUI)
-  find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+  find_package(Qt4 COMPONENTS QtCore QtGui qtmain REQUIRED)
 
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_NO_DEBUG")
@@ -23,7 +23,7 @@ if(ENABLE_QT)
   include(${QT_USE_FILE})
   add_definitions(${QT_DEFINITIONS})
 
-  add_executable(puGUI ${puGUI_SOURCES} ${puGUI_HEADERS} ${puGUI_HEADERS_MOC})
+  add_executable(puGUI WIN32 ${puGUI_SOURCES} ${puGUI_HEADERS} ${puGUI_HEADERS_MOC})
   target_link_libraries(puGUI ${QT_LIBRARIES})
 
 endif()

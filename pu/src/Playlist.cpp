@@ -72,7 +72,7 @@ bool PlaylistModuleImpl::exportToFile( const Playlist& playlist, const char* fil
 
 bool PlaylistModuleImpl::registerImporter( PlaylistImporter* importer, const char* extension ) {
   assert(nullptr != importer && "Invalid importer.");
-  bool importerExists = supportsImport( extension );
+  auto importerExists = supportsImport( extension );
   if ( importer ) {
     mImporters.insert( ImporterMap::value_type(extension, PlaylistImporterPtr(importer)) );
   }
@@ -85,7 +85,7 @@ bool PlaylistModuleImpl::supportsImport( const char* extension ) const {
 
 bool PlaylistModuleImpl::registerExporter( PlaylistExporter* exporter, const char* extension ) {
   assert(nullptr != exporter && "Invalid exporter.");
-  bool exporterExists = supportsExport( extension );
+  auto exporterExists = supportsExport( extension );
   if (exporter) {
     //assert(isValid(extension) && "Invalid exporter.");
     mExporters.insert( ExporterMap::value_type(extension, PlaylistExporterPtr(exporter)) );

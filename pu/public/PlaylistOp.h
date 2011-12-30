@@ -42,13 +42,13 @@ public:
 class PU_API ConstSongsOp {
 public:
   virtual ~ConstSongsOp() { }
-  virtual bool operator()( const Song& first, size_t count ) const = 0;
+  virtual bool operator()( const Song* first, Song* last ) const = 0;
 };
 
 class PU_API SongsOp {
 public:
   virtual ~SongsOp() { }
-  virtual bool operator()( Song& first, size_t count ) const = 0;
+  virtual bool operator()( Song* first, Song* last ) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////

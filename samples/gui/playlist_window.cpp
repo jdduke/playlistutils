@@ -29,8 +29,8 @@ PlaylistWindow::PlaylistWindow() {
   ///////////////////////////////////////////////////////////////////////////
   // Playlist About
 
-  QGridLayout *mainLayout = new QGridLayout;
-  setLayout(mainLayout);	
+  auto* mainLayout = new QGridLayout;
+  setLayout(mainLayout);
 
   lconnect(this, SIGNAL(testLambda()), [this](){
     qDebug() << "This is only a test" << this->windowTitle();

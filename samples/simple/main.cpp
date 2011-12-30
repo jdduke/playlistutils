@@ -26,8 +26,7 @@ public:
 
 int main(int argc, char** argv) {
 
-  
-  pu::PlaylistModule& module = pu::playlistModule();
+  auto& module = pu::playlistModule();
   pu::PlaylistPtr playlist;
 
   if ( argc <= 1 ) {
@@ -75,8 +74,8 @@ int main(int argc, char** argv) {
       std::cout << "Hello " << song.path() << std::endl;
     });
 
-    playlist->apply( [](pu::Song& start, size_t count) { 
-      std::sort(&start, &start + count, [](const pu::Song& s1, const pu::Song& s2) {
+    playlist->apply( [](pu::Song* first, pu::Song* last) { 
+      std::sort(first, last, [](const pu::Song& s1, const pu::Song& s2) {
         return std::strcmp( s1.path(), s2.path() ) < 0;
       }); 
     });
