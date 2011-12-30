@@ -32,9 +32,12 @@ PlaylistWindow::PlaylistWindow() {
   QGridLayout *mainLayout = new QGridLayout;
   setLayout(mainLayout);	
 
-  lconnect(this, SIGNAL(testLambda()), [](){
-    qDebug() << "This is only a test\n";
+  lconnect(this, SIGNAL(testLambda()), [this](){
+    qDebug() << "This is only a test" << this->windowTitle();
   });
+
+  emit testLambda();
+
   /*
   mainLayout->addWidget(a.mButton, 0, 0, 2, 1);
   mainLayout->addWidget(a.mComboBox, 2, 0, 1, 1);
@@ -79,13 +82,17 @@ PlaylistWindow::PlaylistWindow() {
 }
 
 void PlaylistWindow::executeOp() {
-
+  emit testLambda();
 }
 
 void PlaylistWindow::refreshOps( ) {
-
+  emit testLambda();
 }
 
 PlaylistWindow::PlaylistOp PlaylistWindow::currentOp() const {
+  return PlaylistOp_None;
+}
 
+PlaylistWindow::~PlaylistWindow() {
+  emit testLambda();
 }

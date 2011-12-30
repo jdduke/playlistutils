@@ -19,11 +19,11 @@ static void myMessageOutput(QtMsgType type, const char* msg) {
   char buf[size];
   switch (type) {
   case QtDebugMsg:
-    sprintf_s(buf, size, "Debug: %s\n", msg);
+    sprintf_s(buf, size, "Debug:    %s\n", msg);
     OutputDebugString(buf);
     break;
   case QtWarningMsg:
-    sprintf_s(buf, size, "Warning: %s\n", msg);
+    sprintf_s(buf, size, "Warning:  %s\n", msg);
     OutputDebugString(buf);
     break;
   case QtCriticalMsg:
@@ -31,7 +31,7 @@ static void myMessageOutput(QtMsgType type, const char* msg) {
     OutputDebugString(buf);
     break;
   case QtFatalMsg:
-    sprintf_s(buf, size, "Fatal: %s\n", msg);
+    sprintf_s(buf, size, "Fatal:    %s\n", msg);
     OutputDebugString(buf);
     abort();
   };

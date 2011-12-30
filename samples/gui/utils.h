@@ -17,9 +17,6 @@ class connect_functor_helper : public QObject {
 public:
   connect_functor_helper(QObject *parent, const std::function<void()>& f_) 
     : QObject(parent), f(f_) { }
-  ~connect_functor_helper() {
-    qDebug() << "Lambda destroyed.\n";
-  }
 
 public Q_SLOTS:
   void signaled() {

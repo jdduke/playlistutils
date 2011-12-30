@@ -17,9 +17,11 @@ class PlaylistWindow : public QWidget {
   Q_OBJECT
 public:
   PlaylistWindow();
+  ~PlaylistWindow();
 
   enum PlaylistOp {
-    PlaylistSongOp_Move = 0,
+    PlaylistOp_None = 0,
+    PlaylistSongOp_Move,
     PlaylistSongOp_Delete,
     PlaylistSongOp_Copy,
     PlaylistOp_New,
@@ -28,6 +30,7 @@ public:
     PlaylistOp_Copy,
     PlaylistOp_Merge,
     PlaylistOp_Sort,
+    PlaylistOpCount
   };
 
 signals:
