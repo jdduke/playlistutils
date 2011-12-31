@@ -27,7 +27,7 @@ protected:
   virtual void fImpl() = 0;
 };
 
-template <class T>
+template <class T, class U = void>
 class connect_functor_helper : public connect_functor {
 public:
   connect_functor_helper(QObject* parent, T&& f_)
@@ -35,8 +35,9 @@ public:
   connect_functor_helper(QObject* parent, const T& f_)
     : connect_functor(parent), f(f_) { }
 
-  void fImpl() { f(); }
-
+  template <class U> 
+  typename std::enable_if< !std::is_same<U,void>::value, void>::type fImpl(const U& arg) { f(arg); }
+  typename std::enable_if<  std::is_same<U,void>::value      >::type fImpl() { f(); }
 private:
   T f;
 };

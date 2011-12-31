@@ -11,6 +11,8 @@
 
 QT_BEGIN_NAMESPACE
 class QComboBox;
+class QStackedWidget;
+class QButtonGroup;
 QT_END_NAMESPACE
 
 class PlaylistWindow : public QWidget {
@@ -30,21 +32,36 @@ public:
     PlaylistOp_Copy,
     PlaylistOp_Merge,
     PlaylistOp_Sort,
-    PlaylistOpCount
+    PlaylistOps,
+
+    PlaylistSongOp_First = PlaylistSongOp_Move,
+    PlaylistSongOp_Last  = PlaylistSongOp_Copy,
+    PlaylistSongOp_Count = PlaylistSongOp_First - PlaylistSongOp_Last,
+    PlaylistOp_First     = PlaylistOp_New,
+    PlaylistOp_Last      = PlaylistOp_Sort,
+    PlaylistOp_Count     = PlaylistOp_First - PlaylistOp_Last,
+
   };
 
 signals:
-  void testLambda();
+  void pushMsg(const char*);
 
 private slots:
-  void executeOp();
+  void refreshPlaylistOp(int);
+  void refreshSongOp(int);
+  void executePlaylistOp();
+  void executeSongOp();
 
 private:
-  void       refreshOp();
-  void       refreshOps();
   PlaylistOp currentOp() const;
 
-  QComboBox* mOperatorComboBox;
+  QWidget* createOpsWidget(QWidget*,QComboBox**,const char*,const char*,const char*);
+  QWidget* createSettingsWidget(QWidget*);
+
+  QComboBox*      mPlaylistOperatorComboBox;
+  QComboBox*      mSongOperatorComboBox;
+  QStackedWidget* mPlaylistViews;
+  QButtonGroup*   mViewButtonGroup;
 };
 
 #endif
