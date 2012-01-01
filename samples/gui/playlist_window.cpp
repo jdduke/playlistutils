@@ -6,6 +6,10 @@
 
 #include "playlist_window.h"
 #include "playlist_utils.h"
+
+#include "PlaylistUtilities.h"
+#include "PlaylistOp.h"
+
 #include "utils.h"
 
 #include <QtGui>
@@ -18,6 +22,31 @@ template<typename T>
 static inline bool inRange(const T& val, const T& low, const T& high) {
   return (low <= val && val <= high);
 }
+
+class QtOpListener : public pu::OpListener {
+public:
+  typedef std::function<void(const char*,const pu::Song&)> A;
+  typedef std::function<void(const char*)>                 B;
+  typedef std::function<void(bool)>                        C;
+
+  QtOpListener(A a, B b, C c) : mA(a), mB(b), mC(c) { }
+
+  void beginOp(const char* opName, const pu::Song& song) const {
+    mA(opName, song);
+  }
+
+  void beginOp(const char* opName) const {
+    mB(opName);
+  }
+
+  void endOp(bool success) const {
+    mC(success);
+  }
+
+  A mA;
+  B mB;
+  C mC;
+};
 
 ///////////////////////////////////////////////////////////////////////////
  
@@ -147,20 +176,27 @@ PlaylistWindow::PlaylistWindow() {
   //topLayout->setSizeConstraint(QLayout::Size)
 
   // Bottom View
-  auto* text = new QTextEdit(bottomWidget);
-  text->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  bottomLayout->addWidget( text );
+  mPlaylistView = new QTableView(bottomWidget);
+  mPlaylistView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  bottomLayout->addWidget( mPlaylistView );
 
   // Full View
   layout->addWidget(topWidget);
   layout->addWidget(bottomWidget);
   //layout->setSizeConstraint(QLayout::SetFixedSize);
 
+  mOpListener.reset( new QtOpListener( 
+    [this](const char* opName, const pu::Song& song) { },
+    [this](const char* opName) { },
+    [this](bool success) { }
+  ));
+
   setWindowTitle(tr("Playlist Utilities"));
 }
 
 void PlaylistWindow::executePlaylistOp() {
   qDebug() << "Executing Playlist Op: " << mPlaylistOperatorComboBox->currentText();
+
 }
 
 void PlaylistWindow::executeSongOp() {

@@ -16,7 +16,7 @@ CopySongOp::CopySongOp( const char* destDir, const FileHandler& traits, const Op
 
 bool CopySongOp::operator()( const Song& song ) const {
   File file( song.path(), mTraits );
-  mListener.beginOp( opName(file).c_str() );
+  mListener.beginOp( "Copying", song );
   auto success = file.copy( mDestDir );
   mListener.endOp( success );
   return success;
@@ -37,7 +37,7 @@ MoveSongOp::MoveSongOp( const char* destDir, const FileHandler& traits, const Op
 
 bool MoveSongOp::operator()( Song& song ) {
   File file( song.path(), mTraits );
-  mListener.beginOp( opName(file).c_str() );
+  mListener.beginOp( "Moving", song );
   auto success = file.move( mDestDir );
   mListener.endOp( success );
   return success;
@@ -58,7 +58,7 @@ DeleteSongOp::DeleteSongOp( const FileHandler& traits, const OpListener& listene
 
 bool DeleteSongOp::operator()( Song& song ) {
   File file( song.path(), mTraits );
-  mListener.beginOp( opName(file).c_str() );
+  mListener.beginOp( "Deleting", song );
   auto success = file.remove();
   mListener.endOp( success );
   return success;

@@ -19,6 +19,7 @@ class Song;
 class PU_API OpListener {
 public:
   virtual ~OpListener() { }
+  virtual void beginOp(const char* opName, const Song& song) const { }
   virtual void beginOp(const char* opName) const { }
   virtual void endOp(bool success) const { }
 };

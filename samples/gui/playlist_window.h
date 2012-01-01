@@ -20,8 +20,8 @@ QT_BEGIN_NAMESPACE
 class QComboBox;
 class QStackedWidget;
 class QButtonGroup;
-class QTextEdit;
-class QLineEdit;
+class QTableView;
+
 class QLabel;
 class QProgressBar;
 QT_END_NAMESPACE
@@ -68,11 +68,12 @@ private:
 
   QWidget* createSettingsWidget(QWidget*);
 
+  QTableView*     mPlaylistView;
+
   QComboBox*      mPlaylistOperatorComboBox;
   QComboBox*      mSongOperatorComboBox;
   QStackedWidget* mPlaylistViews;
   QButtonGroup*   mViewButtonGroup;
-  QTextEdit*      mSongPlaylistText;
   QLabel*         mFileLabel;
   QProgressBar*   mFileProgress;
   QLabel*         mOpLabel;
@@ -82,6 +83,7 @@ private:
   QLabel*         mPlaylistOpLabel;
   QProgressBar*   mPlaylistOpProgress;
 
+  std::unique_ptr<pu::OpListener>            mOpListener;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;
 };
 

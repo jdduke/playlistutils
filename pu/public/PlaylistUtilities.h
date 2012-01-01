@@ -125,6 +125,7 @@ public:
   virtual bool move(  const char* sourcePath, const char* destPath) const = 0;
   virtual bool remove(const char* sourcePath) const                       = 0;
   virtual bool exists(const char* sourcePath) const                       = 0;
+  virtual size_t size(const char* sourcePath) const                       = 0;
 };
 
 class PU_API XmlHandler {

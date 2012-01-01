@@ -20,6 +20,7 @@ public:
   bool move(  const char* sourcePath, const char* destPath) const;
   bool remove(const char* sourcePath) const;
   bool exists(const char* sourcePath) const;
+  size_t size(const char* sourcePath) const;
 };
 
 // TODO: Implement

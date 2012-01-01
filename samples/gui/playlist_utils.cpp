@@ -30,3 +30,7 @@ bool QtFileHandler::remove(const char* sourcePath) const {
 bool QtFileHandler::exists(const char* sourcePath) const {
   return QFile::exists(sourcePath);
 }
+
+size_t QtFileHandler::size(const char* sourcePath) const {
+  return QFile(sourcePath).size();
+}

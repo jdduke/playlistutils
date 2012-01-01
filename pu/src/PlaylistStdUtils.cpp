@@ -40,3 +40,14 @@ bool pu::StdFileHandler::exists(const char* sourcePath) const {
   return !(!ifs);
   //return nullptr != ifs;
 }
+
+size_t pu::StdFileHandler::size(const char* sourcePath) const {
+  std::streampos fsize = 0;
+  std::ifstream file(sourcePath, std::ios::binary);
+  if (file.is_open()) {
+    fsize = file.tellg();
+    file.seekg( 0, std::ios::end );
+    fsize = file.tellg() - fsize;
+  }
+  return fsize;
+}

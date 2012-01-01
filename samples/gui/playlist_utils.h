@@ -16,6 +16,7 @@ public:
   virtual bool move(  const char* sourcePath, const char* destPath) const;
   virtual bool remove(const char* sourcePath) const;
   virtual bool exists(const char* sourcePath) const;
+  virtual size_t size(const char* sourcePath) const;
 };
 
 #endif

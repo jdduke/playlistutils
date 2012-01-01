@@ -47,6 +47,7 @@ public:
       : mDir( fileDir(source) ),
       mName( fileName(source) ),
       mPath( source ),
+      mSize( handler.size(source) ),
       mHandler( handler ) { }
 
   bool rename( const char* destName ) {
@@ -80,6 +81,7 @@ public:
   const char* getDir()  const { return mDir.c_str();  }
   const char* getName() const { return mName.c_str(); }
   const char* getPath() const { return mPath.c_str(); }
+  size_t      getSize() const { return mSize; }
 
   inline static std::string fileDir( const char* path ) {
     std::string filePath(path);
@@ -142,6 +144,7 @@ private:
   std::string mDir;
   std::string mName;
   std::string mPath;
+  size_t      mSize;
   const FileHandler& mHandler;
 };
 
