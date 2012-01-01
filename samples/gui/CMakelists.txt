@@ -24,6 +24,6 @@ if(ENABLE_QT)
   add_definitions(${QT_DEFINITIONS})
 
   add_executable(puGUI WIN32 ${puGUI_SOURCES} ${puGUI_HEADERS} ${puGUI_HEADERS_MOC})
-  target_link_libraries(puGUI ${QT_LIBRARIES})
+  target_link_libraries(puGUI pu ${QT_LIBRARIES})
 
 endif()

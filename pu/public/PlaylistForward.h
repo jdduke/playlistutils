@@ -1,0 +1,70 @@
+/////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2011, Jared Duke.
+// This code is released under the MIT License.
+// www.opensource.org/licenses/mit-license.php
+/////////////////////////////////////////////////////////////////////////////
+
+#ifndef PLAYLIST_FORWARD_H
+#define PLAYLIST_FORWARD_H
+
+#include <PlaylistCommon.h>
+
+namespace pu {
+
+class Song;
+class Playlist;
+
+///////////////////////////////////////////////////////////////////////////
+
+class PlaylistImporter;
+class PlaylistExporter;
+
+///////////////////////////////////////////////////////////////////////////
+
+class FileHandler;
+class XmlHandler;
+class LogHandler;
+
+///////////////////////////////////////////////////////////////////////////
+
+class PlaylistModule;
+class SongComparator;
+
+///////////////////////////////////////////////////////////////////////////
+
+class OpListener;
+class ConstSongOp;
+class SongOp;
+class ConstSongsOp;
+class SongsOp;
+class ConstPlaylistOp;
+class PlaylistOp;
+
+///////////////////////////////////////////////////////////////////////////
+
+template< class Op > class PlaylistSongOp;
+template< class Op > class ConstPlaylistSongOp;
+template< class Op > class PlaylistSongsOp;
+template< class Op > class ConstPlaylistSongsOp;
+
+///////////////////////////////////////////////////////////////////////////
+
+class CopySongOp;
+class MoveSongOp;
+class DeleteSongOp;
+class SortSongsOp;
+
+///////////////////////////////////////////////////////////////////////////
+
+class Releaser {
+public:
+  template< typename T>
+  void operator()(T* ptr) {
+    if( ptr ) { ptr->release(); }
+  }
+};
+
+
+}
+
+#endif

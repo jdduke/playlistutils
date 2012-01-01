@@ -8,6 +8,7 @@
 #define PLAYLIST_UTILITIES_H
 
 #include <PlaylistCommon.h>
+#include <PlaylistForward.h>
 
 #include <iosfwd>
 #include <algorithm>
@@ -94,14 +95,6 @@ protected:
 
   typedef std::vector< Song > Songs;
   Songs mSongs;
-};
-
-class Releaser {
-public:
-  template< typename T>
-  void operator()(T* ptr) {
-    if( ptr ) { ptr->release(); }
-  }
 };
 
 typedef std::unique_ptr<Playlist,Releaser> PlaylistPtr;

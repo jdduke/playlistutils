@@ -8,11 +8,22 @@
 #define PLAYLIST_WINDOW_H
 
 #include <QWidget>
+#include <PlaylistForward.h>
+#include <memory>
+
+namespace pu {
+class Releaser;
+class Playlist;
+}
 
 QT_BEGIN_NAMESPACE
 class QComboBox;
 class QStackedWidget;
 class QButtonGroup;
+class QTextEdit;
+class QLineEdit;
+class QLabel;
+class QProgressBar;
 QT_END_NAMESPACE
 
 class PlaylistWindow : public QWidget {
@@ -55,13 +66,23 @@ private slots:
 private:
   PlaylistOp currentOp() const;
 
-  QWidget* createOpsWidget(QWidget*,QComboBox**,const char*,const char*,const char*);
   QWidget* createSettingsWidget(QWidget*);
 
   QComboBox*      mPlaylistOperatorComboBox;
   QComboBox*      mSongOperatorComboBox;
   QStackedWidget* mPlaylistViews;
   QButtonGroup*   mViewButtonGroup;
+  QTextEdit*      mSongPlaylistText;
+  QLabel*         mFileLabel;
+  QProgressBar*   mFileProgress;
+  QLabel*         mOpLabel;
+  QProgressBar*   mOpProgress;
+  QLabel*         mPlaylistFileLabel;
+  QProgressBar*   mPlaylistFileProgress;
+  QLabel*         mPlaylistOpLabel;
+  QProgressBar*   mPlaylistOpProgress;
+
+  std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;
 };
 
 #endif

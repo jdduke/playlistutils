@@ -19,7 +19,73 @@ static inline bool inRange(const T& val, const T& low, const T& high) {
   return (low <= val && val <= high);
 }
 
-/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+ 
+static QWidget* createOpsWidget(
+  QWidget* parentCallback, QWidget* parent, QComboBox** comboBox,
+  QLabel** fileLabel, QProgressBar** fileProgress,
+  QLabel** opLabel,   QProgressBar** opProgress,
+  const char* ops, const char* executeOp, const char* refreshOp) {
+
+  auto* widget              = new QWidget(parent);
+  auto* layout              = new QVBoxLayout(widget);
+  auto* topWidget           = new QWidget(widget);
+  auto* topLayout           = new QHBoxLayout(topWidget);
+  auto* midWidget           = new QWidget(widget);
+  auto* midLayout           = new QHBoxLayout(midWidget);
+  auto* bottomWidget        = new QWidget(widget);
+  auto* bottomLayout        = new QHBoxLayout(bottomWidget);
+  auto* executeButton       = new QPushButton(QWidget::tr("Execute"), midWidget);
+  auto* closeButton         = new QPushButton(QWidget::tr("Close"), midWidget);
+  //auto* loadPlaylistButton  = new QPushButton(tr("Load playlist"), topWidget);
+  *fileLabel                = new QLabel(QWidget::tr("Drop playlist here"), topWidget);
+  *fileProgress             = new QProgressBar(widget);
+  *opLabel                  = new QLabel(QWidget::tr("Select target folder"), bottomWidget);
+  *opProgress               = new QProgressBar(widget);
+  (*comboBox)               = new QComboBox(midWidget);
+  (*comboBox)->addItems( QString(ops).split(" ",QString::SkipEmptyParts) );
+
+  //topLayout->setSpacing(30);
+  //topLayout->addSpacing(30);
+  topLayout->addWidget(*fileLabel);
+  topLayout->addSpacing(30);
+  topLayout->addStretch();
+
+  midLayout->addStretch();
+  midLayout->addWidget(*comboBox);
+  midLayout->addSpacing(30);
+  midLayout->addWidget(executeButton);
+  midLayout->addStretch();
+  midLayout->addWidget(closeButton);
+  midLayout->addStretch();
+
+  bottomLayout->addWidget(*opLabel);
+  bottomLayout->addStretch();
+
+  layout->setSpacing(0);
+  layout->addWidget(topWidget);
+  layout->addWidget(*fileProgress);
+  layout->addSpacing(20);
+  layout->addWidget(bottomWidget);
+  layout->addWidget(*opProgress);
+  layout->addSpacing(20);
+  layout->addWidget(midWidget);
+  layout->addStretch();
+  
+  QWidget::connect(executeButton,  SIGNAL(clicked()), 
+          parentCallback, executeOp);
+
+  QWidget::connect(*comboBox, SIGNAL(activated(int)),
+          parentCallback, refreshOp);
+
+  lconnect(closeButton, SIGNAL(clicked()), []() {
+    QApplication::quit();
+  });
+
+  return widget;
+}
+
+///////////////////////////////////////////////////////////////////////////
 
 PlaylistWindow::PlaylistWindow() {
 
@@ -61,8 +127,12 @@ PlaylistWindow::PlaylistWindow() {
   //selectViewButtonsLayout->SetMinimumSize(QLayout::SetFixedSize);
 
   mPlaylistViews = new QStackedWidget(topWidget);
-  mPlaylistViews->addWidget(createOpsWidget(mPlaylistViews,&mPlaylistOperatorComboBox,"New Move Delete Copy Merge Sort",SLOT(executePlaylistOp()),SLOT(refreshPlaylistOp())));
-  mPlaylistViews->addWidget(createOpsWidget(mPlaylistViews,&mSongOperatorComboBox,    "    Move Delete Copy           ",SLOT(executeSongOp()),    SLOT(refreshSongOp())));
+  mPlaylistViews->addWidget(
+    createOpsWidget(this,mPlaylistViews,&mPlaylistOperatorComboBox,&mPlaylistFileLabel,&mPlaylistFileProgress,&mPlaylistOpLabel,&mPlaylistOpProgress,
+    "New Move Delete Copy Merge Sort",SLOT(executePlaylistOp()),SLOT(refreshPlaylistOp(int))));
+  mPlaylistViews->addWidget(
+    createOpsWidget(this,mPlaylistViews,&mSongOperatorComboBox,&mFileLabel,&mFileProgress,&mOpLabel,&mOpProgress,
+    "    Move Delete Copy           ",SLOT(executeSongOp()),    SLOT(refreshSongOp(int))));
   mPlaylistViews->addWidget(createSettingsWidget(mPlaylistViews));
   mPlaylistViews->setCurrentIndex(0);
 
@@ -113,7 +183,8 @@ PlaylistWindow::~PlaylistWindow() {
 
 }
 
-QWidget* PlaylistWindow::createOpsWidget(QWidget* parent, QComboBox** comboBox, const char* ops, const char* executeOp, const char* refreshOp) {
+/*
+QWidget* PlaylistWindow::createOpsWidget(QWidget* parent, QComboBox** comboBox, QTextEdit** textEdit, const char* ops, const char* executeOp, const char* refreshOp) {
   auto* widget              = new QWidget(parent);
   auto* layout              = new QVBoxLayout(widget);
   auto* topWidget           = new QWidget(widget);
@@ -123,19 +194,20 @@ QWidget* PlaylistWindow::createOpsWidget(QWidget* parent, QComboBox** comboBox, 
   (*comboBox) = new QComboBox(topWidget);
   (*comboBox)->addItems( QString(ops).split(" ",QString::SkipEmptyParts) );
 
+  topLayout->setSpacing(30);
+  topLayout->addSpacing(30);
   topLayout->addWidget(loadPlaylistButton);
   topLayout->addWidget(*comboBox);
   topLayout->addWidget(executeButton);
-  topLayout->setSpacing(30);
-  topLayout->insertSpacing(0, 50);
+  topLayout->addSpacing(30);
   topLayout->addStretch();
 
-  auto* text = new QTextEdit;//(widget);
-  text->setMaximumHeight(150);
-  text->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
+  *textEdit = new QTextEdit;//(widget);
+  (*textEdit)->setMaximumHeight(150);
+  (*textEdit)->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
 
   layout->addWidget(topWidget);
-  layout->addWidget(text);
+  layout->addWidget(*textEdit);
   layout->addStretch();
 
   connect(executeButton, SIGNAL(clicked()), 
@@ -146,6 +218,8 @@ QWidget* PlaylistWindow::createOpsWidget(QWidget* parent, QComboBox** comboBox, 
 
   return widget;
 }
+*/
+
 
 QWidget* PlaylistWindow::createSettingsWidget(QWidget* parent) {
   auto* widget = new QWidget(parent);

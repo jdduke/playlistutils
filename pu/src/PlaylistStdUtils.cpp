@@ -14,11 +14,11 @@ using namespace pu;
 ///////////////////////////////////////////////////////////////////////////
 
 bool StdFileHandler::copy(const char* sourcePath, const char* destPath) const {
-  std::ifstream ifs(sourcePath, std::ios::binary);
-  std::ofstream ofs(destPath,   std::ios::binary);
+  std::ifstream ifs(sourcePath, std::ios::in  | std::ios::binary | std::ios::_Nocreate);
+  std::ofstream ofs(destPath,   std::ios::out | std::ios::binary);
   if (ifs.is_open()  && ofs.is_open()) {
     ofs << ifs.rdbuf();
-    return true;
+    return !ofs.bad() /* && ifs.eof() */ ;
   }
   return false;
 }
@@ -35,7 +35,8 @@ bool StdFileHandler::move(const char* sourcePath, const char* destPath) const {
   return copy(sourcePath, destPath) && remove(sourcePath);
 }
 
-bool pu::StdFileHandler::exists( const char* sourcePath ) const {
+bool pu::StdFileHandler::exists(const char* sourcePath) const {
   std::ifstream ifs(sourcePath);
-  return nullptr != ifs;
+  return !(!ifs);
+  //return nullptr != ifs;
 }

@@ -1,9 +1,9 @@
-project(ticpp)
+project(txml)
 
 add_definitions("-DTIXML_USE_TICPP")
 add_definitions("-DTIXML_USE_STL")
 
-file(GLOB TICPP_HEADERS *.h)
-file(GLOB TICPP_SOURCES *.cpp)
+file(GLOB TXML_HEADERS *.h)
+file(GLOB TXML_SOURCES *.cpp)
 
-add_library(ticpp STATIC ${TICPP_HEADERS} ${TICPP_SOURCES})
+add_library(txml STATIC ${TXML_HEADERS} ${TXML_SOURCES})
