@@ -52,7 +52,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////
  
 static QWidget* createOpsWidget(
-  QWidget* parentCallback, QWidget* parent, QComboBox** comboBox,
+  QWidget* parentCallback, QWidget* parent, QComboBox** comboBox, QPushButton** actionButton,
   QLabel** fileLabel, QProgressBar** fileProgress,
   QLabel** opLabel,   QProgressBar** opProgress,
   const char* ops, const char* executeOp, const char* refreshOp) {
@@ -65,13 +65,14 @@ static QWidget* createOpsWidget(
   auto* midLayout           = new QHBoxLayout(midWidget);
   auto* bottomWidget        = new QWidget(widget);
   auto* bottomLayout        = new QHBoxLayout(bottomWidget);
-  auto* executeButton       = new QPushButton(QWidget::tr("Execute"), midWidget);
   auto* closeButton         = new QPushButton(QWidget::tr("Close"), midWidget);
+  *actionButton             = new QPushButton(QWidget::tr("Execute"), midWidget);
   //auto* loadPlaylistButton  = new QPushButton(tr("Load playlist"), topWidget);
   *fileLabel                = new QLabel(QWidget::tr("Drop playlist here"), topWidget);
   *fileProgress             = new QProgressBar(widget);
   *opLabel                  = new QLabel(QWidget::tr("Select target folder"), bottomWidget);
   *opProgress               = new QProgressBar(widget);
+  (*opProgress)->setMinimum(0);
   (*comboBox)               = new QComboBox(midWidget);
   (*comboBox)->addItems( QString(ops).split(" ",QString::SkipEmptyParts) );
 
@@ -81,11 +82,12 @@ static QWidget* createOpsWidget(
   topLayout->addSpacing(30);
   topLayout->addStretch();
 
-  midLayout->addStretch();
+  midLayout->addSpacing(10);
+  midLayout->addWidget(new QLabel("Action: ", widget));
   midLayout->addWidget(*comboBox);
-  midLayout->addSpacing(30);
-  midLayout->addWidget(executeButton);
-  midLayout->addStretch();
+  midLayout->addSpacing(20);
+  midLayout->addWidget(*actionButton);
+  midLayout->addSpacing(20);
   midLayout->addWidget(closeButton);
   midLayout->addStretch();
 
@@ -102,11 +104,9 @@ static QWidget* createOpsWidget(
   layout->addWidget(midWidget);
   layout->addStretch();
   
-  QWidget::connect(executeButton,  SIGNAL(clicked()), 
-          parentCallback, executeOp);
+  QWidget::connect(*actionButton, SIGNAL(clicked()),            parentCallback, executeOp);
 
-  QWidget::connect(*comboBox, SIGNAL(activated(int)),
-          parentCallback, refreshOp);
+  QWidget::connect(*comboBox, SIGNAL(currentIndexChanged(int)), parentCallback, refreshOp);
 
   lconnect(closeButton, SIGNAL(clicked()), []() {
     QApplication::quit();
@@ -117,7 +117,7 @@ static QWidget* createOpsWidget(
 
 ///////////////////////////////////////////////////////////////////////////
 
-PlaylistWindow::PlaylistWindow() {
+PlaylistWindow::PlaylistWindow() : mState(OpStates) {
 
   lconnect(this, SIGNAL(pushMsg(const char*)), [](){
     qDebug() << "New Message";
@@ -157,22 +157,21 @@ PlaylistWindow::PlaylistWindow() {
   //selectViewButtonsLayout->SetMinimumSize(QLayout::SetFixedSize);
 
   mPlaylistViews = new QStackedWidget(topWidget);
-  mPlaylistViews->addWidget(
+  /*mPlaylistViews->addWidget(
     createOpsWidget(this,mPlaylistViews,&mPlaylistOperatorComboBox,&mPlaylistFileLabel,&mPlaylistFileProgress,&mPlaylistOpLabel,&mPlaylistOpProgress,
-    "New Move Delete Copy Merge Sort",SLOT(executePlaylistOp()),SLOT(refreshPlaylistOp(int))));
+    "New Move Delete Copy Merge Sort",SLOT(executePlaylistOp()),SLOT(refreshPlaylistOp(int))));*/
   mPlaylistViews->addWidget(
-    createOpsWidget(this,mPlaylistViews,&mSongOperatorComboBox,&mFileLabel,&mFileProgress,&mOpLabel,&mOpProgress,
-    "    Move Delete Copy           ",SLOT(executeSongOp()),    SLOT(refreshSongOp(int))));
-  mPlaylistViews->addWidget(createSettingsWidget(mPlaylistViews));
-  mPlaylistViews->setCurrentIndex(0);
-
+    createOpsWidget(this,mPlaylistViews,&mSongOperatorComboBox,&mExecuteButton,&mFileLabel,&mFileProgress,&mOpLabel,&mOpProgress,
+    "    Move Delete Copy           ",SLOT(executeSongOp()),    SLOT(refreshState())));
+  //mPlaylistViews->addWidget(createSettingsWidget(mPlaylistViews));
+  
   //connect(mViewButtonGroup, SIGNAL(buttonClicked(int)), mPlaylistViews, SLOT(setCurrentIndex(int)));
   lconnect(mViewButtonGroup, SIGNAL(buttonClicked(int)), [this]() {
     qDebug() << "Setting view: " << mViewButtonGroup->checkedId();
     mPlaylistViews->setCurrentIndex(mViewButtonGroup->checkedId());
   });
 
-  topLayout->addWidget(selectViewButtons);
+  //topLayout->addWidget(selectViewButtons);
   topLayout->addWidget(mPlaylistViews);
   //topLayout->setSizeConstraint(QLayout::Size)
 
@@ -192,6 +191,7 @@ PlaylistWindow::PlaylistWindow() {
   bottomLayout->addWidget( mPlaylistView );
 
   // Full View
+  layout->setSpacing(0);
   layout->addWidget(topWidget);
   layout->addWidget(bottomWidget);
   //layout->setSizeConstraint(QLayout::SetFixedSize);
@@ -202,24 +202,26 @@ PlaylistWindow::PlaylistWindow() {
     [this](bool success) { }
   ));
 
+  connect(this, SIGNAL(stateChanged()), 
+          this, SLOT(refreshOpState()));
+
+  mSongOperatorComboBox->setCurrentIndex(0);
+  mPlaylistViews->setCurrentIndex(0);
+  refreshState();
+
   setWindowTitle(tr("Playlist Utilities"));
-}
 
-void PlaylistWindow::executePlaylistOp() {
-  qDebug() << "Executing Playlist Op: " << mPlaylistOperatorComboBox->currentText();
-
+  setAcceptDrops(true);
 }
 
 void PlaylistWindow::executeSongOp() {
-  qDebug() << "Executing Song Op: " << mSongOperatorComboBox->currentText();
-}
-
-void PlaylistWindow::refreshPlaylistOp(int op) {
-  qDebug() << "Refreshing Playlist Op: " << op;
-}
-
-void PlaylistWindow::refreshSongOp(int op) {
-  qDebug() << "Refreshing Song Op: " << op;
+  if (mState != OpState_Executing && mState != OpState_Invalid) {
+    qDebug() << "Executing Song Op: " << mSongOperatorComboBox->currentText();
+  } else {
+    qDebug() << "Pausing Song Op: " << mSongOperatorComboBox->currentText();
+    // Handle pause
+  }
+  
 }
 
 PlaylistWindow::PlaylistOp PlaylistWindow::currentOp() const {
@@ -273,4 +275,118 @@ QWidget* PlaylistWindow::createSettingsWidget(QWidget* parent) {
   auto* layout = new QHBoxLayout(widget);
   widget->setLayout(layout);
   return widget;
+}
+
+void PlaylistWindow::refreshOpState() {
+  mFileLabel->setText(fileText());
+  mOpLabel->setText(opText());
+  mSongOperatorComboBox->setDisabled(false);
+  mExecuteButton->setEnabled(true);
+  mExecuteButton->setText("Execute");
+  switch (mState) {
+  case OpState_Invalid:
+    mExecuteButton->setEnabled(false);
+  case OpState_Valid:
+    mFileProgress->setValue(0);
+    mOpProgress->setValue(0);
+    break;
+  case OpState_Executing:
+    mExecuteButton->setText("Pause");
+    mSongOperatorComboBox->setDisabled(true);
+    mFileProgress->setMaximum(100);
+    mOpProgress->setMaximum((int)mPlaylist->songCount());
+    break;
+  case OpState_Complete:
+    mExecuteButton->setEnabled(false);
+    mFileProgress->setValue(mFileProgress->maximum());
+    mOpProgress->setValue(mOpProgress->maximum());
+    break;
+  default:
+    qDebug() << "Invalid op state.";
+  };
+}
+
+QString PlaylistWindow::opText() const {
+  switch(mSongOperatorComboBox->currentIndex()+PlaylistSongOp_First) {
+  case PlaylistSongOp_Move:
+  case PlaylistSongOp_Copy:
+    return mDestinationPath.isEmpty() ? "Select Destination" : mDestinationPath;
+  case PlaylistSongOp_Delete:
+  default:
+    return "";
+  };
+  
+}
+
+QString PlaylistWindow::fileText() const {
+  switch(mSongOperatorComboBox->currentIndex()+PlaylistSongOp_First) {
+  case PlaylistSongOp_Move:
+  case PlaylistSongOp_Copy:
+  case PlaylistSongOp_Delete:
+    return mState == OpState_Executing ? mFileText : 
+      mPlaylistPath.isEmpty() ? "Load playlist" : mPlaylistPath;
+  default:
+    return "";
+  };
+}
+
+void PlaylistWindow::setOpState(OpState opState) {
+  if (opState != mState) {
+    mState = opState;
+  }
+}
+
+void PlaylistWindow::dragEnterEvent(QDragEnterEvent* e) {
+  if (mState != OpState_Executing && e->mimeData()->hasFormat("text/uri-list"))
+    e->acceptProposedAction();
+}
+
+void PlaylistWindow::setPlaylist(QString playlistPath) {
+  mPlaylistPath = playlistPath;
+  mPlaylist = pu::playlistModule().importFromFile(mPlaylistPath.toLatin1());
+  mPlaylistModel->setPlaylist( mPlaylist.get() );
+  refreshState();
+}
+
+void PlaylistWindow::setDestination(QString destinationPath) {
+  mDestinationPath = destinationPath;
+  refreshState();
+}
+
+void PlaylistWindow::dropEvent(QDropEvent* e) {
+  
+  if (e->mimeData()->hasUrls()) {
+    foreach(QUrl url, e->mimeData()->urls()) {
+      QFileInfo info( url.toLocalFile() );
+      if (info.isFile() && info.exists()) {
+        setPlaylist(info.absoluteFilePath());
+        break;
+      } else if (info.isDir() && info.exists()) {
+        setDestination(info.absolutePath());
+        break;
+      } 
+    }
+  }
+
+  e->acceptProposedAction();
+}
+
+void PlaylistWindow::refreshState() {
+  if (mState == OpState_Executing)
+    return;
+
+  int songOp = PlaylistSongOp_First + mSongOperatorComboBox->currentIndex();
+  switch( songOp ) {
+  case PlaylistSongOp_Move:
+  case PlaylistSongOp_Copy:
+    setOpState(mPlaylist && mPlaylist->songCount() > 0 && !mDestinationPath.isEmpty() ? OpState_Valid : OpState_Invalid);
+    emit stateChanged();
+    break;
+  case PlaylistSongOp_Delete:
+    setOpState(mPlaylist && mPlaylist->songCount() > 0 ? OpState_Valid : OpState_Invalid);
+    emit stateChanged();
+    break;
+  default:
+    qDebug() << " Invalid song operation";
+  };
 }

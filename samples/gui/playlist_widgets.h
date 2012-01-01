@@ -10,25 +10,37 @@
 #include <QAbstractItemDelegate>
 #include <QAbstractTableModel>
 
+#include <PlaylistForward.h>
+
 class PlaylistModel : public QAbstractTableModel {
   Q_OBJECT
 
 public:
-  PlaylistModel(QObject *parent=0);
-  PlaylistModel(QList< QPair<QString, QString> > listofPairs, QObject *parent=0);
 
+  enum Status {
+    Status_Empty = 0,
+    Status_Success,
+    Status_Failure
+  };
+
+  PlaylistModel(QObject *parent = nullptr);
+  PlaylistModel(pu::Playlist* playlist, QObject *parent = nullptr);
+
+  void setPlaylist(pu::Playlist* playlist);
+
+  int rowCount() const;
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   Qt::ItemFlags flags(const QModelIndex &index) const;
   bool setData(const QModelIndex &index, const QVariant &value, int role=Qt::EditRole);
-  bool insertRows(int position, int rows, const QModelIndex &index=QModelIndex());
-  bool removeRows(int position, int rows, const QModelIndex &index=QModelIndex());
-  QList< QPair<QString, QString> > getList();
 
 private:
-  QList< QPair<QString, QString> > listOfPairs;
+
+  QVector< QString > mStatusString;
+  QVector< Status >  mStatus;
+  pu::Playlist*    mPlaylist;
 };
 
 ///////////////////////////////////////////////////////////////////////////

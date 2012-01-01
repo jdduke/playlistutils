@@ -17,22 +17,32 @@ class Playlist;
 }
 
 QT_BEGIN_NAMESPACE
-class QComboBox;
-class QStackedWidget;
 class QButtonGroup;
-class QTableView;
-
+class QComboBox;
 class QLabel;
 class QProgressBar;
+class QPushButton;
+class QStackedWidget;
+class QTableView;
 QT_END_NAMESPACE
 
 class PlaylistModel;
 
 class PlaylistWindow : public QWidget {
   Q_OBJECT
+
 public:
+
   PlaylistWindow();
   ~PlaylistWindow();
+
+  enum OpState {
+    OpState_Invalid = 0,
+    OpState_Valid,
+    OpState_Executing,
+    OpState_Complete,
+    OpStates
+  };
 
   enum PlaylistOp {
     PlaylistOp_None = 0,
@@ -53,20 +63,28 @@ public:
     PlaylistOp_First     = PlaylistOp_New,
     PlaylistOp_Last      = PlaylistOp_Sort,
     PlaylistOp_Count     = PlaylistOp_First - PlaylistOp_Last,
-
   };
 
+  virtual void dragEnterEvent(QDragEnterEvent*);
+  virtual void dropEvent(QDropEvent*);
 signals:
   void pushMsg(const char*);
+  void stateChanged();
 
 private slots:
-  void refreshPlaylistOp(int);
-  void refreshSongOp(int);
-  void executePlaylistOp();
+  void refreshOpState();
+  void refreshState();
+  void setOpState(OpState);
   void executeSongOp();
 
 private:
+  void setPlaylist(QString playlistPath);
+  void setDestination(QString destinationPath);
+
   PlaylistOp currentOp() const;
+  
+  QString fileText() const;
+  QString opText() const;
 
   QWidget* createSettingsWidget(QWidget*);
 
@@ -78,14 +96,14 @@ private:
   QStackedWidget* mPlaylistViews;
   QButtonGroup*   mViewButtonGroup;
   QLabel*         mFileLabel;
+  QString         mFileText;
   QProgressBar*   mFileProgress;
   QLabel*         mOpLabel;
   QProgressBar*   mOpProgress;
-  QLabel*         mPlaylistFileLabel;
-  QProgressBar*   mPlaylistFileProgress;
-  QLabel*         mPlaylistOpLabel;
-  QProgressBar*   mPlaylistOpProgress;
-  
+  QString         mDestinationPath, mPlaylistPath;
+  QPushButton*    mExecuteButton;
+
+  OpState mState;
 
   std::unique_ptr<pu::OpListener>            mOpListener;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;

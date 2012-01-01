@@ -6,22 +6,38 @@
 
 #include "playlist_widgets.h"
 
+#include <PlaylistUtilities.h>
+
+#include <QFileInfo>
 #include <QPainter>
 
 ///////////////////////////////////////////////////////////////////////////
 
 PlaylistModel::PlaylistModel(QObject *parent)
-  : QAbstractTableModel(parent) {
+  : QAbstractTableModel(parent), mPlaylist(nullptr) {
 }
 
-PlaylistModel::PlaylistModel(QList< QPair<QString, QString> > pairs, QObject *parent)
+PlaylistModel::PlaylistModel(pu::Playlist* playlist, QObject *parent)
   : QAbstractTableModel(parent) {
-    listOfPairs=pairs;
+  setPlaylist(playlist);
 }
 
-int PlaylistModel::rowCount(const QModelIndex &parent) const {
-  Q_UNUSED(parent);
-  return listOfPairs.size();
+void PlaylistModel::setPlaylist(pu::Playlist* playlist) {
+  if (playlist != mPlaylist) {
+    emit layoutAboutToBeChanged();
+    mPlaylist     = playlist;
+    mStatusString = QVector<QString>(rowCount());
+    mStatus       = QVector<Status>(rowCount(), Status_Empty);
+    emit layoutChanged();
+  }
+}
+
+int PlaylistModel::rowCount(const QModelIndex&) const {
+  return rowCount();
+}
+
+int PlaylistModel::rowCount() const {
+  return mPlaylist ? (int)mPlaylist->songCount() : 0;
 }
 
 int PlaylistModel::columnCount(const QModelIndex &parent) const {
@@ -33,16 +49,18 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid())
     return QVariant();
 
-  if (index.row() >= listOfPairs.size() || index.row() < 0)
+  if (index.row() >= rowCount() || index.row() < 0)
     return QVariant();
 
   if (role == Qt::DisplayRole) {
-    QPair<QString, QString> pair = listOfPairs.at(index.row());
-
     if (index.column() == 0)
-      return pair.first;
+      return (int)mStatus.at(index.row());
     else if (index.column() == 1)
-      return pair.second;
+      return mPlaylist ? mPlaylist->song(index.row()).path() : "";
+    else if (index.column() == 2)
+      return mPlaylist ? QFileInfo(mPlaylist->song(index.row()).path()).size() : 0;
+    else if (index.column() == 3)
+      return mStatusString.at(index.row());
   }
   return QVariant();
 }
@@ -69,47 +87,18 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
   return QVariant();
 }
 
-bool PlaylistModel::insertRows(int position, int rows, const QModelIndex &index) {
-  Q_UNUSED(index);
-  beginInsertRows(QModelIndex(), position, position+rows-1);
-
-  for (int row=0; row < rows; row++) {
-    QPair<QString, QString> pair(" ", " ");
-    listOfPairs.insert(position, pair);
-  }
-
-  endInsertRows();
-  return true;
-}
-
-bool PlaylistModel::removeRows(int position, int rows, const QModelIndex &index) {
-  Q_UNUSED(index);
-  beginRemoveRows(QModelIndex(), position, position+rows-1);
-
-  for (int row=0; row < rows; ++row) {
-    listOfPairs.removeAt(position);
-  }
-
-  endRemoveRows();
-  return true;
-}
-
 bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
   if (index.isValid() && role == Qt::EditRole) {
     int row = index.row();
 
-    QPair<QString, QString> p = listOfPairs.value(row);
-
     if (index.column() == 0)
-      p.first = value.toString();
-    else if (index.column() == 1)
-      p.second = value.toString();
+      mStatus[row] = static_cast<Status>(value.toUInt());
+    else if (index.column() == 3)
+      mStatusString[row] = value.toString();
     else
       return false;
 
-    listOfPairs.replace(row, p);
     emit(dataChanged(index, index));
-
     return true;
   }
 
@@ -121,10 +110,6 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
     return Qt::ItemIsEnabled;
 
   return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
-}
-
-QList< QPair<QString, QString> > PlaylistModel::getList() {
-  return listOfPairs;
 }
 
 ///////////////////////////////////////////////////////////////////////////
