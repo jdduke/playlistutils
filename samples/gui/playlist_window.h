@@ -26,6 +26,8 @@ class QLabel;
 class QProgressBar;
 QT_END_NAMESPACE
 
+class PlaylistModel;
+
 class PlaylistWindow : public QWidget {
   Q_OBJECT
 public:
@@ -69,6 +71,7 @@ private:
   QWidget* createSettingsWidget(QWidget*);
 
   QTableView*     mPlaylistView;
+  PlaylistModel*  mPlaylistModel;
 
   QComboBox*      mPlaylistOperatorComboBox;
   QComboBox*      mSongOperatorComboBox;
@@ -82,6 +85,7 @@ private:
   QProgressBar*   mPlaylistFileProgress;
   QLabel*         mPlaylistOpLabel;
   QProgressBar*   mPlaylistOpProgress;
+  
 
   std::unique_ptr<pu::OpListener>            mOpListener;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;

@@ -5,6 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "playlist_window.h"
+#include "playlist_widgets.h"
 #include "playlist_utils.h"
 
 #include "PlaylistUtilities.h"
@@ -178,6 +179,16 @@ PlaylistWindow::PlaylistWindow() {
   // Bottom View
   mPlaylistView = new QTableView(bottomWidget);
   mPlaylistView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  mPlaylistModel = new PlaylistModel(bottomWidget);
+  mPlaylistView->setModel(mPlaylistModel);
+  mPlaylistView->setItemDelegateForColumn(0, new ImageDelegate(bottomWidget));
+  mPlaylistView->setColumnWidth(0, 15);
+  mPlaylistView->setSelectionBehavior(QAbstractItemView::SelectRows);
+  mPlaylistView->horizontalHeader()->setStretchLastSection(true);
+  mPlaylistView->verticalHeader()->hide();
+  mPlaylistView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  mPlaylistView->setSelectionMode(QAbstractItemView::SingleSelection);
+
   bottomLayout->addWidget( mPlaylistView );
 
   // Full View
