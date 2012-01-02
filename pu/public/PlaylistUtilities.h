@@ -28,6 +28,7 @@ public:
   Song() : mLength(INVALID_LENGTH) { }
   Song(const char* path);
 
+  bool        empty()  const { return mPath.length() == 0; }
   size_t      length() const { return mLength; }
   const char* path()   const { return mPath.c_str(); }
   const char* artist() const { return mArtist.c_str(); }
@@ -62,7 +63,8 @@ public:
     return mSongs.size();
   }
   const Song& song(size_t index) const {
-    return mSongs[index];
+    static Song nullSong;
+    return index < songCount() ? mSongs[index] : nullSong;
   }
 
   ///////////////////////////////////////////////////////////////////////////

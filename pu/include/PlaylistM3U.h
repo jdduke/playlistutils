@@ -44,8 +44,8 @@ public:
       if ( beginsWith(line, "#") ) {
 
       } else if ( endsWith(line, "mp3") ) {
-        if (line.find_first_of(":\\")  != std::string::npos &&
-            line.find_first_of("\\\\") != std::string::npos) {
+        /*if (line.find_first_of(":\\")  != std::string::npos &&
+            line.find_first_of("\\\\") != std::string::npos)*/ {
           //mSongs.push_back( Song(0, trim(line), std::string(), std::string()) );
           //mSongs.push_back( Song(0, line.c_str(), "", "") );
           mSongs.emplace_back(line.c_str());

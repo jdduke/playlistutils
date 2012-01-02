@@ -187,6 +187,9 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
   mPlaylistView->verticalHeader()->hide();
   mPlaylistView->setEditTriggers(QAbstractItemView::NoEditTriggers);
   mPlaylistView->setSelectionMode(QAbstractItemView::SingleSelection);
+  mPlaylistView->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(mPlaylistView, SIGNAL(customContextMenuRequested(const QPoint&)),
+          this,          SLOT(customContextMenu(const QPoint&)));
 
   bottomLayout->addWidget( mPlaylistView );
 
@@ -389,4 +392,39 @@ void PlaylistWindow::refreshState() {
   default:
     qDebug() << " Invalid song operation";
   };
+}
+
+void PlaylistWindow::customContextMenu(const QPoint& p) {
+  if (nullptr != mPlaylistView->selectionModel()) {
+    QMenu menu(this);
+
+    QAction* openInExplorer = new QAction(tr("&Open location..."), this);
+    openInExplorer->setStatusTip(tr("Open file location"));
+    openInExplorer->setShortcut(tr("Ctrl+O"));
+    lconnect(openInExplorer, SIGNAL(triggered()), [this]() { 
+      const pu::Song* song = selectedSong();
+      if (nullptr != song) {
+        //QString path = QDir::toNativeSeparators(song->path());
+        QDesktopServices::openUrl(QUrl::fromLocalFile(song->path()));
+      }
+    });
+    menu.addAction(openInExplorer);
+    menu.exec(QCursor::pos());
+  }
+}
+
+const pu::Song* PlaylistWindow::selectedSong() const {
+  if (!mPlaylist || mState == OpState_Executing) return nullptr;
+
+  auto* model = this->mPlaylistView->selectionModel();
+  if (nullptr == model) return nullptr;
+
+  auto rows = model->selectedRows();
+  if( rows.empty() ) return nullptr;
+
+  auto index = rows.at(0);
+  if (index.row() < 0 || index.row() >= mPlaylist->songCount()) return nullptr;
+
+  const auto& song = mPlaylist->song((size_t)index.row());
+  return song.empty() ? nullptr : &song;
 }
