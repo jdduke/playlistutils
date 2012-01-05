@@ -11,6 +11,14 @@
 
 #include <string>
 
+#if defined(PU_WINDOWS)
+#include <direct.h>
+#include <io.h>
+#define ChDir  _chdir
+#define Open   _open
+#define GetCwd _getcwd
+#endif
+
 namespace pu {
 
 inline bool beginsWith( const std::string& path, const std::string& beginning ) {
@@ -103,6 +111,48 @@ public:
     return "";
   }
 
+  static std::string absPath(const std::string &base, const std::string &rel) {
+    std::string path;
+    if (rel[0] == '/') {
+      path = rel;
+    } else {
+      path = base;
+      path += '/';
+      path += rel;
+    }
+
+    std::string::reverse_iterator first = path.rbegin();
+    std::string rev;
+    size_t ignore = 0;
+
+    while (first != path.rend()) {
+      while (first != path.rend() && *first == '/') ++first;
+      std::string::reverse_iterator last = first;
+      while (last != path.rend() && *last != '/') ++last;
+
+      if (first != last) {
+        std::string component(first, last);
+        if (component == "..") {
+          ++ignore;
+        } else if (component == ".") {
+          // skip
+        } else {
+          if (ignore) {
+            --ignore;
+          } else {
+            rev += component;
+            rev += '/';
+          }
+        }
+      }
+
+      first = last;
+    }
+
+    std::reverse(rev.begin(), rev.end());
+    if (rev.empty()) rev = "/";
+    return rev;
+  }
 
 private:
   DISALLOW_COPY_AND_ASSIGN(File);

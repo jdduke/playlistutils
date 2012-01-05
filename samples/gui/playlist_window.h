@@ -67,6 +67,8 @@ public:
 
   virtual void dragEnterEvent(QDragEnterEvent*);
   virtual void dropEvent(QDropEvent*);
+  const pu::Song* selectedSong() const;
+
 signals:
   void pushMsg(const char*);
   void stateChanged();
@@ -76,6 +78,8 @@ private slots:
   void refreshState();
   void setOpState(OpState);
   void executeSongOp();
+
+  void customContextMenu(const QPoint&);
 
 private:
   void setPlaylist(QString playlistPath);
