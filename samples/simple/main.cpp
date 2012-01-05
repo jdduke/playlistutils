@@ -17,6 +17,9 @@ public:
   void beginOp( const char* opName ) {
     std::cout << opName << " ... ";
   }
+  void beginOp(const char* opName, const pu::Song& song) const {
+    std::cout << opName << " : " << song.path();
+  }
   void endOp( bool success ) {
     std::cout << (success ? " succeeded." : "failed.") << std::endl;
   }

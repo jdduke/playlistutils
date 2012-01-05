@@ -66,15 +66,6 @@ public:
   virtual void operator()( Playlist& ) const = 0;
 };
 
-///////////////////////////////////////////////////////////////////////////
-
-PU_API ConstSongOp*     createConstSongOp(const char* name);
-PU_API SongOp*          createSongOp(const char* name);
-PU_API ConstSongsOp*    createConstSongsOp(const char* name);
-PU_API SongsOp*         createSongsOp(const char* name);
-PU_API ConstPlaylistOp* createConstPlaylistOp(const char* name);
-PU_API PlaylistOp*      createPlaylistOp(const char* name);
-
 }
 
 #endif
