@@ -1,0 +1,10 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+     <file alias="image/success">images/low_green_check.png</file>
+     <file alias="image/failure">images/low_red_x.png</file>
+     <file alias="image/error">images/low_red_question.png</file>
+     <file>images/med_green_check.png</file>
+     <file>images/med_red_x.png</file>
+     <file>images/med_red_question.png</file>
+ </qresource>
+ </RCC>

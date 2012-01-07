@@ -17,13 +17,15 @@ if(ENABLE_QT)
 
   file(GLOB puGUI_SOURCES *.cpp)
   file(GLOB puGUI_HEADERS *.h)
+  file(GLOB puGUI_RESOURCES *.qrc)
 
   qt4_wrap_cpp(puGUI_HEADERS_MOC ${puGUI_HEADERS})
+  qt4_add_resources(puGUI_RESOURCES_RCC ${puGUI_RESOURCES})
 
   include(${QT_USE_FILE})
   add_definitions(${QT_DEFINITIONS})
 
-  add_executable(puGUI WIN32 ${puGUI_SOURCES} ${puGUI_HEADERS} ${puGUI_HEADERS_MOC})
-  target_link_libraries(puGUI pu ${QT_LIBRARIES})
+  add_executable(puGUI WIN32 ${puGUI_SOURCES} ${puGUI_HEADERS} ${puGUI_HEADERS_MOC} ${puGUI_RESOURCES_RCC})
+  target_link_libraries(puGUI pu tthread ${QT_LIBRARIES})
 
 endif()

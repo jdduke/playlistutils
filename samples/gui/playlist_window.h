@@ -16,6 +16,10 @@ class Releaser;
 class Playlist;
 }
 
+namespace tthread {
+  class thread;
+}
+
 QT_BEGIN_NAMESPACE
 class QButtonGroup;
 class QComboBox;
@@ -108,7 +112,8 @@ private:
   QPushButton*    mExecuteButton;
 
   OpState mState;
-
+  
+  std::unique_ptr<tthread::thread> mOpThread;
   std::unique_ptr<pu::OpListener>            mOpListener;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;
 };

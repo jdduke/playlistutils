@@ -20,7 +20,16 @@ public:
   enum Status {
     Status_Empty = 0,
     Status_Success,
-    Status_Failure
+    Status_Failure,
+    Status_Count
+  };
+
+  enum Column {
+    Column_Image = 0,
+    Column_Source,
+    Column_Size,
+    Column_Status,
+    Column_Count
   };
 
   PlaylistModel(QObject *parent = nullptr);
@@ -47,9 +56,11 @@ private:
 
 class ImageDelegate : public QAbstractItemDelegate {
 public:
-  ImageDelegate(QObject * parent = 0);
+  ImageDelegate(const QStringList& imageList, QObject * parent = 0);
   void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const;
   QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const;
+private:
+  QVector<QPixmap> mImages;
 };
 
 #endif

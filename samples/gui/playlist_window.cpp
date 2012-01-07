@@ -13,6 +13,8 @@
 
 #include "utils.h"
 
+#include <tthread/tinythread.h>
+
 #include <QtGui>
 
 #include <QButtonGroup>
@@ -180,7 +182,7 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
   mPlaylistView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   mPlaylistModel = new PlaylistModel(bottomWidget);
   mPlaylistView->setModel(mPlaylistModel);
-  mPlaylistView->setItemDelegateForColumn(0, new ImageDelegate(bottomWidget));
+  mPlaylistView->setItemDelegateForColumn(0, new ImageDelegate(QString(" :/image/success :/image/failure").split(" "), bottomWidget));
   mPlaylistView->setColumnWidth(0, 15);
   mPlaylistView->setSelectionBehavior(QAbstractItemView::SelectRows);
   mPlaylistView->horizontalHeader()->setStretchLastSection(true);
@@ -200,9 +202,23 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
   //layout->setSizeConstraint(QLayout::SetFixedSize);
 
   mOpListener.reset( new QtOpListener( 
-    [this](const char* opName, const pu::Song& song) { },
-    [this](const char* opName) { },
-    [this](bool success) { }
+    [this](const char* opName, const pu::Song& song) {
+      this->mFileLabel->setText( song.path() );
+      this->mFileProgress->setValue( 0 );
+      int playlistSongIndex = this->mOpProgress->value();
+      QModelIndex playlistModelIndex = this->mPlaylistModel->index(playlistSongIndex, PlaylistModel::Column_Status);
+      this->mPlaylistModel->setData( playlistModelIndex, opName );
+    },
+    [this](const char* opName) {
+      this->mFileLabel->setText( opName );
+    },
+    [this](bool success) {
+      int playlistSongIndex = this->mOpProgress->value();
+      QModelIndex playlistModelIndex = this->mPlaylistModel->index(playlistSongIndex, PlaylistModel::Column_Image);
+      this->mPlaylistModel->setData( playlistModelIndex, success ? PlaylistModel::Status_Success : PlaylistModel::Status_Failure );
+      this->mOpProgress->setValue( playlistSongIndex + 1 );
+      this->mFileProgress->setValue( success ? 100 : 0 );
+    }
   ));
 
   connect(this, SIGNAL(stateChanged()), 
@@ -220,6 +236,7 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
 void PlaylistWindow::executeSongOp() {
   if (mState != OpState_Executing && mState != OpState_Invalid) {
     qDebug() << "Executing Song Op: " << mSongOperatorComboBox->currentText();
+
   } else {
     qDebug() << "Pausing Song Op: " << mSongOperatorComboBox->currentText();
     // Handle pause

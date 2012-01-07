@@ -114,8 +114,11 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
 
 ///////////////////////////////////////////////////////////////////////////
 
-ImageDelegate::ImageDelegate(QObject * parent)
+ImageDelegate::ImageDelegate(const QStringList& imageList, QObject * parent)
   : QAbstractItemDelegate(parent) {
+  for (int i = 0; i < imageList.size(); ++i) {
+    mImages.push_back(QPixmap(imageList.at(i)));
+  }
 }
 
 QSize ImageDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const {
@@ -123,26 +126,7 @@ QSize ImageDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelI
 }
 
 void ImageDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const {
-  int data = index.data(Qt::DisplayRole).toInt();
-
-  switch (data) {
-  case 0:
-    {
-      QPixmap pm(":/img/red");
-      painter->drawPixmap(option.rect, pm);
-      return;
-    }
-  case 1:
-    {
-      QPixmap pm(":/img/green");
-      painter->drawPixmap(option.rect, pm);
-      return;
-    }
-  case 2:
-    {
-      QPixmap pm(":/img/blue");
-      painter->drawPixmap(option.rect, pm);
-      return;
-    }
-  };
+  int i = index.data(Qt::DisplayRole).toInt();
+  if (0 <= i && i < mImages.size() && !mImages[i].isNull())
+    painter->drawPixmap(option.rect, mImages[i]);
 }

@@ -113,12 +113,13 @@ set(TTHREAD_LIB tthread)
 
 include_directories(${PU_SOURCE_DIR}/pu/include)
 include_directories(${PU_SOURCE_DIR}/pu/public)
-include_directories(${PU_SOURCE_DIR}/common)
+include_directories(common)
 
 add_subdirectory(pu)
 
 SET(BUILD_SAMPLES TRUE CACHE BOOL "Build samples")
 if(BUILD_SAMPLES)
+  include_directories(external)
   add_subdirectory(external/ticpp)
   add_subdirectory(external/tthread)
   add_subdirectory(samples)
