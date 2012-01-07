@@ -10,6 +10,7 @@
 
 #include "PlaylistUtilities.h"
 #include "PlaylistOp.h"
+#include "PlaylistOps.h"
 
 #include "utils.h"
 
@@ -28,22 +29,22 @@ static inline bool inRange(const T& val, const T& low, const T& high) {
 
 class QtOpListener : public pu::OpListener {
 public:
-  typedef std::function<void(const char*,const pu::Song&)> A;
-  typedef std::function<void(const char*)>                 B;
-  typedef std::function<void(bool)>                        C;
+  typedef std::function<bool(const char*,const pu::Song&)> A;
+  typedef std::function<bool(const char*)>                 B;
+  typedef std::function<bool(bool)>                        C;
 
   QtOpListener(A a, B b, C c) : mA(a), mB(b), mC(c) { }
 
-  void beginOp(const char* opName, const pu::Song& song) const {
-    mA(opName, song);
+  bool beginOp(const char* opName, const pu::Song& song) const {
+    return mA(opName, song);
   }
 
-  void beginOp(const char* opName) const {
-    mB(opName);
+  bool beginOp(const char* opName) const {
+    return mB(opName);
   }
 
-  void endOp(bool success) const {
-    mC(success);
+  bool endOp(bool success) const {
+    return mC(success);
   }
 
   A mA;
@@ -74,6 +75,7 @@ static QWidget* createOpsWidget(
   *fileProgress             = new QProgressBar(widget);
   *opLabel                  = new QLabel(QWidget::tr("Select target folder"), bottomWidget);
   *opProgress               = new QProgressBar(widget);
+  (*fileProgress)->setMinimum(0);
   (*opProgress)->setMinimum(0);
   (*comboBox)               = new QComboBox(midWidget);
   (*comboBox)->addItems( QString(ops).split(" ",QString::SkipEmptyParts) );
@@ -202,27 +204,53 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
   //layout->setSizeConstraint(QLayout::SetFixedSize);
 
   mOpListener.reset( new QtOpListener( 
-    [this](const char* opName, const pu::Song& song) {
+    [this](const char* opName, const pu::Song& song) -> bool {
+      while (this->currentState() == PlaylistWindow::OpState_Paused) {
+        tthread::this_thread::sleep_for(tthread::chrono::milliseconds(100));
+      }
+      if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
+        return false;
       this->mFileLabel->setText( song.path() );
-      this->mFileProgress->setValue( 0 );
-      int playlistSongIndex = this->mOpProgress->value();
-      QModelIndex playlistModelIndex = this->mPlaylistModel->index(playlistSongIndex, PlaylistModel::Column_Status);
+      this->setFileProgress( 0 );
+      int listIndex = this->mOpProgress->value();
+      QModelIndex playlistModelIndex = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
       this->mPlaylistModel->setData( playlistModelIndex, opName );
+      return true;
     },
-    [this](const char* opName) {
+    [this](const char* opName) -> bool {
+      if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
+        return false;
       this->mFileLabel->setText( opName );
+      this->mFileProgress->setValue( 0 );
+      int listIndex = this->mOpProgress->value();
+      QModelIndex playlistModelIndex = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
+      this->mPlaylistModel->setData( playlistModelIndex, opName );
+      return true;
     },
-    [this](bool success) {
-      int playlistSongIndex = this->mOpProgress->value();
-      QModelIndex playlistModelIndex = this->mPlaylistModel->index(playlistSongIndex, PlaylistModel::Column_Image);
-      this->mPlaylistModel->setData( playlistModelIndex, success ? PlaylistModel::Status_Success : PlaylistModel::Status_Failure );
-      this->mOpProgress->setValue( playlistSongIndex + 1 );
-      this->mFileProgress->setValue( success ? 100 : 0 );
+    [this](bool success) -> bool {
+      if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
+        return false;
+      int listIndex = this->mOpProgress->value();
+      QModelIndex playlistModelIndexI = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Image );
+      this->mPlaylistModel->setData( playlistModelIndexI, success ? PlaylistModel::Status_Success : PlaylistModel::Status_Failure );
+      QModelIndex playlistModelIndexS = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
+      this->mPlaylistModel->setData( playlistModelIndexS, success ? "OK" : "Error" );
+      this->setOpProgress( std::min(listIndex + 1, this->mOpProgress->maximum()) );
+      this->setFileProgress( success ? mFileProgress->maximum() : 0 );
+      return true;
     }
   ));
 
+  pu::playlistModule().setOpListener(mOpListener.get());
+
   connect(this, SIGNAL(stateChanged()), 
           this, SLOT(refreshOpState()));
+
+  connect(this,          SIGNAL(fileProgressChanged(int)),
+          mFileProgress, SLOT(setValue(int)), Qt::BlockingQueuedConnection);
+
+  connect(this,          SIGNAL(opProgressChanged(int)),
+          mOpProgress,   SLOT(setValue(int)), Qt::BlockingQueuedConnection);
 
   mSongOperatorComboBox->setCurrentIndex(0);
   mPlaylistViews->setCurrentIndex(0);
@@ -234,22 +262,55 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
 }
 
 void PlaylistWindow::executeSongOp() {
-  if (mState != OpState_Executing && mState != OpState_Invalid) {
+  if (mState == OpState_Paused) {
+    qDebug() << "Resuming Song Op: " << mSongOperatorComboBox->currentText();
+    setOpState(OpState_Executing);
+    refreshOpState();
+  } else if (mState != OpState_Executing && mState != OpState_Invalid) {
+    auto executeOp = [this](void* data) {
+      pu::Playlist* playlist = this->mPlaylist.get();
+      if (playlist) {
+        size_t op = (size_t)data;
+        switch(op) {
+        case PlaylistSongOp_Move:
+          playlist->applyOp(pu::MoveSongOp(this->mDestinationPath.toLatin1()));
+          break;
+        case PlaylistSongOp_Delete:
+          playlist->applyOp(pu::DeleteSongOp());
+          break;
+        case PlaylistSongOp_Copy:
+          playlist->applyOp(pu::CopySongOp(this->mDestinationPath.toLatin1()));
+          break;
+        default:
+          break;
+        }
+      }
+    };
+    setOpState(OpState_Executing);
+    refreshOpState();
     qDebug() << "Executing Song Op: " << mSongOperatorComboBox->currentText();
-
+    mOpThread.reset( new tthread::thread(executeOp, (void*)currentOp()) );
   } else {
+    setOpState(OpState_Paused);
+    refreshOpState();
     qDebug() << "Pausing Song Op: " << mSongOperatorComboBox->currentText();
     // Handle pause
   }
   
 }
 
+PlaylistWindow::OpState PlaylistWindow::currentState() const {
+  return mState;
+}
+
 PlaylistWindow::PlaylistOp PlaylistWindow::currentOp() const {
-  return PlaylistOp_None;
+  return (PlaylistWindow::PlaylistOp)mSongOperatorComboBox->currentIndex();
 }
 
 PlaylistWindow::~PlaylistWindow() {
-
+  setOpState(OpState_Shutdown);
+  if (mOpThread)
+    mOpThread->join();
 }
 
 /*
@@ -315,6 +376,10 @@ void PlaylistWindow::refreshOpState() {
     mSongOperatorComboBox->setDisabled(true);
     mFileProgress->setMaximum(100);
     mOpProgress->setMaximum((int)mPlaylist->songCount());
+    break;
+  case OpState_Paused:
+    mExecuteButton->setText("Resume");
+    mSongOperatorComboBox->setDisabled(true);
     break;
   case OpState_Complete:
     mExecuteButton->setEnabled(false);
@@ -392,8 +457,10 @@ void PlaylistWindow::dropEvent(QDropEvent* e) {
 }
 
 void PlaylistWindow::refreshState() {
-  if (mState == OpState_Executing)
+  if (mState == OpState_Executing) {
+    emit stateChanged();
     return;
+  }
 
   int songOp = PlaylistSongOp_First + mSongOperatorComboBox->currentIndex();
   switch( songOp ) {
@@ -445,3 +512,16 @@ const pu::Song* PlaylistWindow::selectedSong() const {
   const auto& song = mPlaylist->song((size_t)index.row());
   return song.empty() ? nullptr : &song;
 }
+
+void PlaylistWindow::setFileProgress( int value ) {
+  emit fileProgressChanged( value );
+}
+
+void PlaylistWindow::setOpProgress( int value ) {
+  emit opProgressChanged( value );
+  if (value >= mPlaylist->songCount()) {
+    setOpState(OpState_Complete);
+    emit stateChanged();
+  }
+}
+

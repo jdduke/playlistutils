@@ -75,63 +75,41 @@ private:
 
 class PU_API CopySongOp : public ConstSongOp {
 public:
-  CopySongOp( const char* destDir, const FileHandler& traits, const OpListener& listener = OpListener() );
-
+  CopySongOp( const char* destDir );
   bool operator()( const Song& song ) const;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(CopySongOp);
-  inline std::string opName( const File& file ) const;
-
   const char* mDestDir;
-  const FileHandler& mTraits;
-  OpListener mListener;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 class PU_API MoveSongOp : public SongOp {
 public:
-  MoveSongOp( const char* destDir, const FileHandler& traits, const OpListener& listener = OpListener() );
-
+  MoveSongOp( const char* destDir );
   bool operator()( Song& song );
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(MoveSongOp);
-  inline std::string opName( const File& file ) const;
-
   const char* mDestDir;
-  const FileHandler& mTraits;
-  OpListener mListener;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 class PU_API DeleteSongOp : public SongOp {
 public:
-  DeleteSongOp( const FileHandler& traits, const OpListener& listener = OpListener() );
-
+  DeleteSongOp();
   bool operator()( Song& song );
-
-private:
-  DISALLOW_COPY_AND_ASSIGN(DeleteSongOp);
-  inline std::string opName( const File& file ) const;
-
-  const FileHandler& mTraits;
-  OpListener mListener;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 class PU_API SortSongsOp : public SongsOp {
 public:
-  SortSongsOp( const SongComparator& compare = SongComparator(),  const OpListener& listener = OpListener() );
-
+  SortSongsOp( const SongComparator& compare = SongComparator() );
   bool operator()( Song* first, Song* last ) const;
 
 private:
   SongComparator mCompare;
-  OpListener     mListener;
 };
 
 ///////////////////////////////////////////////////////////////////////////

@@ -11,43 +11,15 @@
 
 #include <string>
 
-#if defined(PU_WINDOWS)
-#include <direct.h>
-#include <io.h>
-#define ChDir  _chdir
-#define Open   _open
-#define GetCwd _getcwd
-#endif
-
 namespace pu {
 
-inline bool beginsWith( const std::string& path, const std::string& beginning ) {
-  if (path.length() >= beginning.length()) {
-    return (0 == path.compare(0, beginning.length(), beginning));
-  } else {
-    return false;
-  }
-}
-
-inline bool endsWith( const std::string& path, const std::string& ending ) {
-  if (path.length() >= ending.length()) {
-    return (0 == path.compare(path.length() - ending.length(), ending.length(), ending));
-  } else {
-    return false;
-  }
-}
-
-inline bool endsWith( const std::string& path, const char* ending ) {
-  return endsWith(path, std::string(ending));
-}
-
-inline bool beginsWith( const std::string& path, const char* beginning ) {
-  return beginsWith(path, std::string(beginning));
-}
-
-inline void fileData(const std::string& path, size_t& length, std::string& artist, std::string& title) {
-  // TODO: Parse mp3 tag
-}
+bool endsWith( const std::string& path, const std::string& ending );
+bool endsWith( const std::string& path, const char* ending );
+bool beginsWith( const std::string& path, const std::string& beginning );
+bool beginsWith( const std::string& path, const char* beginning );
+std::string absPath( const std::string &base, const std::string &rel );
+void fileData(std::string& path, size_t& length, std::string& artist, std::string& title);
+std::string extensionOf( const char* fileName );
 
 class File {
 public:
@@ -111,49 +83,6 @@ public:
     return "";
   }
 
-  static std::string absPath(const std::string &base, const std::string &rel) {
-    std::string path;
-    if (rel[0] == '/') {
-      path = rel;
-    } else {
-      path = base;
-      path += '/';
-      path += rel;
-    }
-
-    std::string::reverse_iterator first = path.rbegin();
-    std::string rev;
-    size_t ignore = 0;
-
-    while (first != path.rend()) {
-      while (first != path.rend() && *first == '/') ++first;
-      std::string::reverse_iterator last = first;
-      while (last != path.rend() && *last != '/') ++last;
-
-      if (first != last) {
-        std::string component(first, last);
-        if (component == "..") {
-          ++ignore;
-        } else if (component == ".") {
-          // skip
-        } else {
-          if (ignore) {
-            --ignore;
-          } else {
-            rev += component;
-            rev += '/';
-          }
-        }
-      }
-
-      first = last;
-    }
-
-    std::reverse(rev.begin(), rev.end());
-    if (rev.empty()) rev = "/";
-    return rev;
-  }
-
 private:
   DISALLOW_COPY_AND_ASSIGN(File);
 
@@ -197,10 +126,6 @@ private:
   size_t      mSize;
   const FileHandler& mHandler;
 };
-
-static inline std::string extensionOf( const char* fileName ) {
-  return File::fileExtension( fileName );
-}
 
 }
 

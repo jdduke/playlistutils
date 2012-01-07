@@ -7,6 +7,7 @@
 #include "Playlist.h"
 
 #include "PlaylistFileUtils.h"
+#include "PlaylistOp.h"
 #include "PlaylistStdUtils.h"
 
 #include "PlaylistM3U.h"
@@ -123,4 +124,16 @@ const LogHandler& PlaylistModuleImpl::logHandler() const {
   static StdLogHandler defaultHandler;
   return mLogHandler ? *mLogHandler : defaultHandler;
 }
+
+void PlaylistModuleImpl::setOpListener( OpListener* listener )
+{
+  mOpListener = listener;
+}
+
+const OpListener& PlaylistModuleImpl::opListener() const
+{
+  static OpListener defaultListener;
+  return mOpListener ? *mOpListener : defaultListener;
+}
+
 

@@ -127,6 +127,12 @@ QSize ImageDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelI
 
 void ImageDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const {
   int i = index.data(Qt::DisplayRole).toInt();
-  if (0 <= i && i < mImages.size() && !mImages[i].isNull())
-    painter->drawPixmap(option.rect, mImages[i]);
+  if (0 <= i && i < mImages.size() && !mImages[i].isNull()) {
+    QRect rect(option.rect);
+    QSize newSize = rect.size();
+    int minD = (int)(.75f * std::min(newSize.width(), newSize.height()));
+    newSize.boundedTo(QSize(minD,minD));
+    rect.setSize(newSize);
+    painter->drawPixmap(rect, mImages[i]);
+  }
 }

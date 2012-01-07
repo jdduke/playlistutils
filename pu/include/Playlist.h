@@ -53,6 +53,9 @@ public:
   void setLogHandler(LogHandler*);
   const LogHandler& logHandler() const;
 
+  void setOpListener(OpListener*);
+  const OpListener& opListener() const;
+
   ///////////////////////////////////////////////////////////////////////////
 
 private:
@@ -75,6 +78,7 @@ private:
   FileHandler* mFileHandler;
   XmlHandler*  mXmlHandler;
   LogHandler*  mLogHandler;
+  OpListener*  mOpListener;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -124,7 +128,7 @@ public:
     PlaylistImplPtr playlist( new PlaylistImpl() );
     std::ifstream ifs( fileName );
     if ( ifs ) {
-      Importer it( ifs );
+      Importer it( ifs, fileName );
       while ( it.hasNext( ) ) {
         playlist->addSong( it.next( ) );
       };

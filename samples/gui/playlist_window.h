@@ -44,13 +44,15 @@ public:
     OpState_Invalid = 0,
     OpState_Valid,
     OpState_Executing,
+    OpState_Paused,
+    OpState_Cancel,
     OpState_Complete,
+    OpState_Shutdown,
     OpStates
   };
 
   enum PlaylistOp {
-    PlaylistOp_None = 0,
-    PlaylistSongOp_Move,
+    PlaylistSongOp_Move = 0,
     PlaylistSongOp_Delete,
     PlaylistSongOp_Copy,
     PlaylistOp_New,
@@ -76,6 +78,8 @@ public:
 signals:
   void pushMsg(const char*);
   void stateChanged();
+  void fileProgressChanged(int);
+  void opProgressChanged(int);
 
 private slots:
   void refreshOpState();
@@ -89,6 +93,10 @@ private:
   void setPlaylist(QString playlistPath);
   void setDestination(QString destinationPath);
 
+  void setFileProgress(int value);
+  void setOpProgress(int value);
+
+  OpState    currentState() const;
   PlaylistOp currentOp() const;
   
   QString fileText() const;

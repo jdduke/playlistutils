@@ -11,75 +11,59 @@ using namespace pu;
 
 ///////////////////////////////////////////////////////////////////////////
 
-CopySongOp::CopySongOp( const char* destDir, const FileHandler& traits, const OpListener& listener )
-    : mDestDir(destDir), mTraits( traits ), mListener( listener ) { }
+CopySongOp::CopySongOp( const char* destDir )
+    : mDestDir(destDir) { }
 
 bool CopySongOp::operator()( const Song& song ) const {
-  File file( song.path(), mTraits );
-  mListener.beginOp( "Copying", song );
-  auto success = file.copy( mDestDir );
-  mListener.endOp( success );
+  File file( song.path(), handler() );
+  auto success = false;
+  if (listener().beginOp( "Copying", song )) {
+    success = file.copy( mDestDir );
+  }
+  listener().endOp( success );
   return success;
-}
-
-std::string CopySongOp::opName( const File& file ) const {
-  std::string opName("Copying ");
-  opName.append( file.getPath() );
-  opName.append( " to " );
-  opName.append( mDestDir );
-  return opName;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
-MoveSongOp::MoveSongOp( const char* destDir, const FileHandler& traits, const OpListener& listener )
-  : mDestDir(destDir), mTraits( traits ), mListener( listener ) { }
+MoveSongOp::MoveSongOp( const char* destDir )
+  : mDestDir(destDir) { }
 
 bool MoveSongOp::operator()( Song& song ) {
-  File file( song.path(), mTraits );
-  mListener.beginOp( "Moving", song );
-  auto success = file.move( mDestDir );
-  mListener.endOp( success );
+  File file( song.path(), handler() );
+  auto success = false;
+  if (listener().beginOp( "Moving", song )) {
+    success = file.move( mDestDir );
+  }
+  listener().endOp( success );
   return success;
-}
-
-std::string MoveSongOp::opName( const File& file ) const {
-  std::string opName("Moving ");
-  opName.append( file.getPath() );
-  opName.append( " to " );
-  opName.append( mDestDir );
-  return opName;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
-DeleteSongOp::DeleteSongOp( const FileHandler& traits, const OpListener& listener )
-    : mTraits( traits ), mListener( listener ) { }
+DeleteSongOp::DeleteSongOp( ) { }
 
 bool DeleteSongOp::operator()( Song& song ) {
-  File file( song.path(), mTraits );
-  mListener.beginOp( "Deleting", song );
-  auto success = file.remove();
-  mListener.endOp( success );
+  File file( song.path(), handler() );
+  auto success = false;
+  if (listener().beginOp( "Deleting", song )) {
+    success = file.remove();
+  }
+  listener().endOp( success );
   return success;
-}
-
-std::string DeleteSongOp::opName( const File& file ) const {
-  std::string opName("Deleting ");
-  opName.append( file.getPath() );
-  return opName;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
-SortSongsOp::SortSongsOp( const SongComparator& compare /*= SongComparator() */,  const OpListener& listener /*= OpListener()*/ )
-  :  mCompare( compare ), mListener( listener ) {
-
-}
+SortSongsOp::SortSongsOp( const SongComparator& compare /*= SongComparator() */ )
+  :  mCompare( compare ) { }
 
 bool SortSongsOp::operator()( Song* first, Song* last ) const {
-  mListener.beginOp( "Sorting..." );
-  std::sort(first, last, mCompare);
-  mListener.endOp( true );
-  return true;
+  auto success = false;
+  if (listener().beginOp( "Sorting..." )) {
+    std::sort(first, last, mCompare);
+    success = true;
+  }
+  listener().endOp( true );
+  return success;
 }

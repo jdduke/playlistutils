@@ -40,9 +40,9 @@ struct PlaylistPLSExport {
 
 class PlaylistPLSImport : public PlaylistImportIterator {
 public:
-  PlaylistPLSImport( std::ifstream& ifs ) { load( ifs ); }
+  PlaylistPLSImport( std::ifstream& ifs, const char* fileName ) { load( ifs, fileName ); }
 
-  void handle( const std::string& line ) {
+  void handle( const std::string& line, const std::string& fileDir ) {
     if (!line.empty()) {
       //TODO: Handle
     }

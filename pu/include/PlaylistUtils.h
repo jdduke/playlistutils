@@ -26,17 +26,18 @@ public:
 
   virtual ~PlaylistImportIterator() { }
 
-  virtual void handle( const std::string& line ) = 0;
+  virtual void handle( const std::string& line, const std::string& filePath ) = 0;
 
-  void load( std::ifstream& ifs ) {
+  void load( std::ifstream& ifs, const char* fileName ) {
     if ( ifs.is_open() ) {
       std::string line;
+      std::string filePath( File::fileDir(fileName) );
       while ( ifs.good() ) {
         std::getline(ifs, line);
         if ( line.empty() ) {
           continue;
         } else {
-          handle(line);
+          handle(line, filePath);
         }
       }
       ifs.close();

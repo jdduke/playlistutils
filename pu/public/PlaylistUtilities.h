@@ -174,6 +174,9 @@ public:
 
   virtual void setLogHandler(LogHandler*)        = 0;
   virtual const LogHandler& logHandler() const   = 0;
+
+  virtual void setOpListener(OpListener*)        = 0;
+  virtual const OpListener& opListener() const   = 0;
 };
 
 ////////////////////////////////////////////////////////f///////////////////

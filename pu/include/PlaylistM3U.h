@@ -37,19 +37,14 @@ struct PlaylistM3UExport {
 
 class PlaylistM3UImport : public PlaylistImportIterator {
 public:
-  PlaylistM3UImport( std::ifstream& ifs ) { load(ifs); }
+  PlaylistM3UImport( std::ifstream& ifs, const char* fileName ) { load(ifs, fileName); }
 
-  virtual void handle(const std::string& line) {
+  virtual void handle(const std::string& line, const std::string& filePath) {
     if (!line.empty()) {
       if ( beginsWith(line, "#") ) {
 
       } else if ( endsWith(line, "mp3") ) {
-        /*if (line.find_first_of(":\\")  != std::string::npos &&
-            line.find_first_of("\\\\") != std::string::npos)*/ {
-          //mSongs.push_back( Song(0, trim(line), std::string(), std::string()) );
-          //mSongs.push_back( Song(0, line.c_str(), "", "") );
-          mSongs.emplace_back(line.c_str());
-        }
+        mSongs.emplace_back(absPath(filePath, line).c_str());
       }
     }
   }

@@ -15,10 +15,12 @@ using namespace pu;
 
 bool StdFileHandler::copy(const char* sourcePath, const char* destPath) const {
   std::ifstream ifs(sourcePath, std::ios::in  | std::ios::binary | std::ios::_Nocreate);
-  std::ofstream ofs(destPath,   std::ios::out | std::ios::binary);
-  if (ifs.is_open()  && ofs.is_open()) {
-    ofs << ifs.rdbuf();
-    return !ofs.bad() /* && ifs.eof() */ ;
+  if (ifs.is_open()) {
+    std::ofstream ofs(destPath, std::ios::out | std::ios::binary);
+    if (ofs.is_open()) {
+      ofs << ifs.rdbuf();
+      return !ofs.bad() /* && ifs.eof() */ ;
+    }
   }
   return false;
 }
