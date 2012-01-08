@@ -121,6 +121,19 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
   return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
 }
 
+void PlaylistModel::addSong(const char* song) {
+  if (mPlaylist) {
+    QModelIndex lastRow = index(rowCount()-1, 0);
+    /*QModelIndex bottomRight = index(rowCount()-1, Column_Count-1);*/
+    beginInsertRows(lastRow, 0, 1);
+    mPlaylist->addSong(song);
+    mStatusString.push_back("");
+    mStatus.push_back(Status_Empty);
+    emit layoutChanged();
+    endInsertRows();
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////
 
 ImageDelegate::ImageDelegate(const QStringList& imageList, QObject * parent)

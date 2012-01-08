@@ -21,6 +21,8 @@ class Playlist;
 
 namespace tthread {
   class thread;
+  class mutex;
+  class condition_variable;
 }
 
 QT_BEGIN_NAMESPACE
@@ -101,6 +103,7 @@ private:
 
   OpState    currentState() const;
   PlaylistOp currentOp() const;
+  bool       readOnly() const;
   
   QString fileText() const;
   QString opText() const;
@@ -128,7 +131,9 @@ private:
 
   OpState mState;
 
-  std::unique_ptr<tthread::thread> mOpThread;
+  std::unique_ptr<tthread::thread>             mOpThread;
+  std::unique_ptr<tthread::mutex>              mOpMutex;
+  std::unique_ptr<tthread::condition_variable> mOpCondition;
   std::unique_ptr<pu::OpListener>            mOpListener;
   std::unique_ptr<pu::FileHandler>           mFileHandler;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;

@@ -155,14 +155,15 @@ class PU_API PlaylistModule {
 public:
   virtual ~PlaylistModule() { }
 
-  virtual PlaylistPtr importFromFile(const char* fileName) const = 0;
-  virtual bool        exportToFile(const Playlist& playlist, const char* fileName) const = 0;
+  virtual PlaylistPtr create() const                                                   = 0;
+  virtual PlaylistPtr createFromFile(const char* fileName) const                       = 0;
+  virtual bool        saveToFile(const Playlist& playlist, const char* fileName) const = 0;
 
   virtual bool registerImporter(PlaylistImporter* importer, const char* extension) = 0;
-  virtual bool supportsImport(const char* extension) const = 0;
+  virtual bool supportsImport(const char* extension) const                         = 0;
 
   virtual bool registerExporter(PlaylistExporter* exporter, const char* extension) = 0;
-  virtual bool supportsExport(const char* extension) const = 0;
+  virtual bool supportsExport(const char* extension) const                         = 0;
 
   virtual void setFileHandler(FileHandler*)      = 0;
   virtual const FileHandler& fileHandler() const = 0;
