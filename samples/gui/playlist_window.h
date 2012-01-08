@@ -8,7 +8,10 @@
 #define PLAYLIST_WINDOW_H
 
 #include <QWidget>
+#include <QTime>
+
 #include <PlaylistForward.h>
+
 #include <memory>
 
 namespace pu {
@@ -93,8 +96,8 @@ private:
   void setPlaylist(QString playlistPath);
   void setDestination(QString destinationPath);
 
-  void setFileProgress(int value);
-  void setOpProgress(int value);
+  int setFileProgress(int value);
+  int setOpProgress(int value);
 
   OpState    currentState() const;
   PlaylistOp currentOp() const;
@@ -116,11 +119,15 @@ private:
   QProgressBar*   mFileProgress;
   QLabel*         mOpLabel;
   QProgressBar*   mOpProgress;
+  QLabel*         mOpLabel2;
   QString         mDestinationPath, mPlaylistPath;
   QPushButton*    mExecuteButton;
 
+  QTime mOpTime;
+  QTime mFileTime; 
+
   OpState mState;
-  
+
   std::unique_ptr<tthread::thread> mOpThread;
   std::unique_ptr<pu::OpListener>            mOpListener;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;

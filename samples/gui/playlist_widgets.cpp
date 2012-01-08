@@ -13,6 +13,13 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
+template <typename T>
+T roundToNearestHundredth(T val) {
+  return ((T)static_cast<int>(val*100+(T)0.5))/100.0;
+}
+
+///////////////////////////////////////////////////////////////////////////
+
 PlaylistModel::PlaylistModel(QObject *parent)
   : QAbstractTableModel(parent), mPlaylist(nullptr) {
 }
@@ -53,12 +60,14 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   if (role == Qt::DisplayRole) {
+    const pu::Song& song = mPlaylist->song(index.row());
     if (index.column() == 0)
       return (int)mStatus.at(index.row());
     else if (index.column() == 1)
-      return mPlaylist ? mPlaylist->song(index.row()).path() : "";
+      //return mPlaylist ? mPlaylist->song(index.row()).path() : "";
+      return mPlaylist ? (QString(song.artist()) + " - " + song.title()) : "";
     else if (index.column() == 2)
-      return mPlaylist ? QFileInfo(mPlaylist->song(index.row()).path()).size() : 0;
+      return mPlaylist ? roundToNearestHundredth((double)song.size()/(1024*1024)) : 0.;
     else if (index.column() == 3)
       return mStatusString.at(index.row());
   }
@@ -76,7 +85,7 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
     case 1:
       return tr("Source File");
     case 2:
-      return tr("Size");
+      return tr("Size (MB)");
     case 3:
       return tr("Status");
 

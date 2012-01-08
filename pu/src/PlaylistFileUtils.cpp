@@ -112,10 +112,6 @@ std::string absPath( const std::string &base, const std::string &rel ) {
   }
 }
 
-void fileData(std::string& path, size_t& length, std::string& artist, std::string& title) {
-  // TODO: Parse mp3 tag
-
-}
 
 std::string extensionOf( const char* fileName ) {
   return File::fileExtension( fileName );

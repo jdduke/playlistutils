@@ -21,21 +21,19 @@ namespace pu {
 
 class Song {
 public:
-  enum {
-    INVALID_LENGTH = ((size_t)-1)
-  };
-
-  Song() : mLength(INVALID_LENGTH) { }
+  Song() : mLength(0), mSize(0) { }
   Song(const char* path);
 
-  bool        empty()  const { return mPath.length() == 0; }
+  bool        empty()  const { return mPath.size() == 0; }
   size_t      length() const { return mLength; }
+  size_t      size()   const { return mSize; }
   const char* path()   const { return mPath.c_str(); }
   const char* artist() const { return mArtist.c_str(); }
   const char* title()  const { return mTitle.c_str(); }
 
-protected:
+private:
   size_t mLength;
+  size_t mSize;
   std::string mPath, mArtist, mTitle;
 };
 

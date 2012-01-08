@@ -10,6 +10,7 @@
 #include "PlaylistOp.h"
 #include "PlaylistStdUtils.h"
 
+#include "PlaylistID3.h"
 #include "PlaylistM3U.h"
 #include "PlaylistPLS.h"
 #include "PlaylistWPL.h"
@@ -26,15 +27,29 @@ PlaylistModule& playlistModule() {
 
 using namespace pu;
 
-Song::Song(const char* path) : mLength(INVALID_LENGTH), mPath(path) {
-  fileData(mPath, mLength, mArtist, mTitle);
+static void fileData(const std::string& path, size_t& length, size_t& size, std::string& artist, std::string& title) {
+  // TODO: Parse mp3 tag
+  File file(path.c_str());
+  size = file.getSize();
+
+  ID31 id31;
+  if (loadID31(path.c_str(), id31)) {
+    artist.assign(id31.artist, 30);
+    trimInPlace(artist);
+    title.assign(id31.title, 30);
+    trimInPlace(title);
+  }
+}
+
+Song::Song(const char* path) : mLength(0), mSize(0), mPath(path) {
+  fileData(mPath, mLength, mSize, mArtist, mTitle);
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
 PlaylistModuleImpl::PlaylistModuleImpl()
   : mFileHandler(nullptr), mXmlHandler(nullptr), mLogHandler(nullptr) {
-    loadDefaults(); 
+  loadDefaults(); 
 }
 
 void PlaylistModuleImpl::loadDefaults() {

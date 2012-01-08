@@ -56,8 +56,8 @@ public:
  
 static QWidget* createOpsWidget(
   QWidget* parentCallback, QWidget* parent, QComboBox** comboBox, QPushButton** actionButton,
-  QLabel** fileLabel, QProgressBar** fileProgress,
-  QLabel** opLabel,   QProgressBar** opProgress,
+  QLabel** fileLabel,                    QProgressBar** fileProgress,
+  QLabel** opLabel,   QLabel** opLabel2, QProgressBar** opProgress, 
   const char* ops, const char* executeOp, const char* refreshOp) {
 
   auto* widget              = new QWidget(parent);
@@ -74,6 +74,7 @@ static QWidget* createOpsWidget(
   *fileLabel                = new QLabel(QWidget::tr("Drop playlist here"), topWidget);
   *fileProgress             = new QProgressBar(widget);
   *opLabel                  = new QLabel(QWidget::tr("Select target folder"), bottomWidget);
+  *opLabel2                 = new QLabel(QWidget::tr(""), bottomWidget);
   *opProgress               = new QProgressBar(widget);
   (*fileProgress)->setMinimum(0);
   (*opProgress)->setMinimum(0);
@@ -97,6 +98,7 @@ static QWidget* createOpsWidget(
 
   bottomLayout->addWidget(*opLabel);
   bottomLayout->addStretch();
+  bottomLayout->addWidget(*opLabel2);
 
   layout->setSpacing(0);
   layout->addWidget(topWidget);
@@ -165,7 +167,7 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
     createOpsWidget(this,mPlaylistViews,&mPlaylistOperatorComboBox,&mPlaylistFileLabel,&mPlaylistFileProgress,&mPlaylistOpLabel,&mPlaylistOpProgress,
     "New Move Delete Copy Merge Sort",SLOT(executePlaylistOp()),SLOT(refreshPlaylistOp(int))));*/
   mPlaylistViews->addWidget(
-    createOpsWidget(this,mPlaylistViews,&mSongOperatorComboBox,&mExecuteButton,&mFileLabel,&mFileProgress,&mOpLabel,&mOpProgress,
+    createOpsWidget(this,mPlaylistViews,&mSongOperatorComboBox,&mExecuteButton,&mFileLabel,&mFileProgress,&mOpLabel,&mOpLabel2,&mOpProgress,
     "    Move Delete Copy           ",SLOT(executeSongOp()),    SLOT(refreshState())));
   //mPlaylistViews->addWidget(createSettingsWidget(mPlaylistViews));
   
@@ -210,7 +212,7 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
       }
       if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
         return false;
-      this->mFileLabel->setText( song.path() );
+      this->mFileLabel->setText( QString(song.path()).mid(0, 120) );
       this->setFileProgress( 0 );
       int listIndex = this->mOpProgress->value();
       QModelIndex playlistModelIndex = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
@@ -236,7 +238,11 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
       QModelIndex playlistModelIndexS = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
       this->mPlaylistModel->setData( playlistModelIndexS, success ? "OK" : "Error" );
       this->setOpProgress( std::min(listIndex + 1, this->mOpProgress->maximum()) );
-      this->setFileProgress( success ? mFileProgress->maximum() : 0 );
+      double sizeInMB = (double)this->mPlaylist->song(listIndex).size() / (1024*1024);
+      double timeInS =  (double)this->setFileProgress( success ? mFileProgress->maximum() : 0 ) / 1000;
+      if (timeInS > 0.) {
+        this->mOpLabel2->setText(QString::number(sizeInMB/timeInS, 'g', 4) + " MB/s");
+      }
       return true;
     }
   ));
@@ -361,6 +367,7 @@ QWidget* PlaylistWindow::createSettingsWidget(QWidget* parent) {
 void PlaylistWindow::refreshOpState() {
   mFileLabel->setText(fileText());
   mOpLabel->setText(opText());
+  mOpLabel2->setText("");
   mSongOperatorComboBox->setDisabled(false);
   mExecuteButton->setEnabled(true);
   mExecuteButton->setText("Execute");
@@ -513,15 +520,27 @@ const pu::Song* PlaylistWindow::selectedSong() const {
   return song.empty() ? nullptr : &song;
 }
 
-void PlaylistWindow::setFileProgress( int value ) {
+int PlaylistWindow::setFileProgress( int value ) {
   emit fileProgressChanged( value );
+  if (mFileTime.isNull()) {
+    mFileTime.start(); 
+    return 1;
+  }
+  else
+    return mFileTime.restart();
 }
 
-void PlaylistWindow::setOpProgress( int value ) {
+int PlaylistWindow::setOpProgress( int value ) {
   emit opProgressChanged( value );
   if (value >= mPlaylist->songCount()) {
     setOpState(OpState_Complete);
     emit stateChanged();
   }
+  if (mOpTime.isNull()) {
+    mOpTime.start(); 
+    return 1;
+  }
+  else
+    return mOpTime.restart();
 }
 

@@ -59,16 +59,20 @@ protected:
   std::deque<Song> mSongs;
 };
 
+static void trimInPlace(std::string& str) {
+  auto pos = str.find_last_not_of(' ');
+  if (pos != std::string::npos) {
+    str.erase(pos + 1);
+    pos = str.find_first_not_of(' ');
+    if(pos != std::string::npos) str.erase(0, pos);
+  }
+  else str.erase(str.begin(), str.end());
+}
+
 static inline std::string trim(const std::string& str) {
   std::string temp(str);
-  auto pos = temp.find_last_not_of(' ');
-  if (pos != std::string::npos) {
-    temp.erase(pos + 1);
-    pos = temp.find_first_not_of(' ');
-    if(pos != std::string::npos) temp.erase(0, pos);
-  }
-  else temp.erase(temp.begin(), temp.end());
-  return std::move(temp);
+  trimInPlace(temp);
+  return temp;
 }
 
 }

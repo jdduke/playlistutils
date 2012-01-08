@@ -18,7 +18,6 @@ bool endsWith( const std::string& path, const char* ending );
 bool beginsWith( const std::string& path, const std::string& beginning );
 bool beginsWith( const std::string& path, const char* beginning );
 std::string absPath( const std::string &base, const std::string &rel );
-void fileData(std::string& path, size_t& length, std::string& artist, std::string& title);
 std::string extensionOf( const char* fileName );
 
 class File {
