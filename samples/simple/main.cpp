@@ -14,14 +14,17 @@
 class CommandLineListener : public pu::OpListener {
 public:
   CommandLineListener() { }
-  void beginOp( const char* opName ) {
+  bool beginOp( const char* opName ) {
     std::cout << opName << " ... ";
+    return true;
   }
-  void beginOp(const char* opName, const pu::Song& song) const {
+  bool beginOp(const char* opName, const pu::Song& song) const {
     std::cout << opName << " : " << song.path();
+    return true;
   }
-  void endOp( bool success ) {
+  bool endOp( bool success ) {
     std::cout << (success ? " succeeded." : "failed.") << std::endl;
+    return true;
   }
 };
 

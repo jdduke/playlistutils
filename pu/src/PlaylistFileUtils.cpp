@@ -6,9 +6,9 @@
 
 #include "PlaylistFileUtils.h"
 
-#ifndef _T
+/*#ifndef _T
 #define _T(x) (x)
-#endif
+#endif*/
 
 #if defined(PU_WINDOWS)
 #include <direct.h>
@@ -16,9 +16,9 @@
 #define ChDir  _chdir
 #define Open   _open
 #define GetCwd _getcwd
-const char DIR_SEP = _T('\\');
+const char DIR_SEP = '\\';
 #else 
-const char DIR_SEP = _T('/');
+const char DIR_SEP = '/';
 #endif
 
 namespace pu {
@@ -49,7 +49,7 @@ bool beginsWith( const std::string& path, const char* beginning ) {
 
 inline bool isSlash(char c)
 {
-	return (c == _T('\\')) || (c == _T('/'));
+	return (c == '\\') || (c == '/');
 }
 
 
@@ -58,10 +58,10 @@ bool isAbsPath(const std::string& path) {
     return false;
   if (isSlash(path[0]))
     return true;
-  size_t i = path.find(_T(':'));
+  size_t i = path.find(':');
   if (i == std::string::npos)
     return false;
-  size_t j = path.find_first_of(_T("/\\"));
+  size_t j = path.find_first_of("/\\");
   if (j == std::string::npos || j > i)
     return true;
   return false;
