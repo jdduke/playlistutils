@@ -248,8 +248,8 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
   ));
   pu::playlistModule().setOpListener(mOpListener.get());
 
-  mFileHandler.reset( new QtFileHandler() );
-  pu::playlistModule().setFileHandler(mFileHandler.get());
+  //mFileHandler.reset( new QtFileHandler() );
+  //pu::playlistModule().setFileHandler(mFileHandler.get());
 
   connect(this, SIGNAL(stateChanged()), 
           this, SLOT(refreshOpState()));

@@ -9,10 +9,23 @@
 #include <stdio.h>
 #include <fstream>
 
+#if defined(PU_WINDOWS)
+#include <Windows.h>
+#else
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+
 using namespace pu;
 
 ///////////////////////////////////////////////////////////////////////////
 
+#if 0
 bool StdFileHandler::copy(const char* sourcePath, const char* destPath) const {
   std::ifstream ifs(sourcePath, std::ios::in  | std::ios::binary | std::ios::_Nocreate);
   if (ifs.is_open()) {
@@ -24,6 +37,31 @@ bool StdFileHandler::copy(const char* sourcePath, const char* destPath) const {
   }
   return false;
 }
+#elif defined(PU_WINDOWS)
+bool StdFileHandler::copy(const char* sourcePath, const char* destPath) const {
+  return CopyFile(sourcePath, destPath, false) != 0;
+}
+#else
+bool StdFileHandler::copy(const char* sourcePath, const char* destPath) const {
+  bool success = false;
+  int read_fd, write_fd;
+  struct stat stat_buf;
+  off_t offset = 0;
+
+  read_fd = open(sourcePath, O_RDONLY);
+  if(read_fd != -1) {
+    if (fstat(read_fd, &stat_buf) == 0) {
+      write_fd = open(destPath, O_WRONLY | O_CREAT, stat_buf.st_mode);
+      if (write_fd != -1) {
+        success = sendfile(write_fd, read_fd, &offset, stat_buf.st_size) != -1;
+        close(write_fd);
+      }
+    }
+    close(read_fd);
+  }
+  return success;
+}
+#endif
 
 bool StdFileHandler::rename(const char* sourcePath, const char* destName) const {
   return ::rename(sourcePath, destName) == 0;

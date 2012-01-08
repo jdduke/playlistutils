@@ -139,9 +139,10 @@ void ImageDelegate::paint(QPainter * painter, const QStyleOptionViewItem & optio
   if (0 <= i && i < mImages.size() && !mImages[i].isNull()) {
     QRect rect(option.rect);
     QSize newSize = rect.size();
-    int minD = (int)(.75f * std::min(newSize.width(), newSize.height()));
-    newSize.boundedTo(QSize(minD,minD));
-    rect.setSize(newSize);
+    int minD = (int)(.9 * std::min(newSize.width(), newSize.height()));
+    rect.setSize(QSize(minD,minD));
+    rect.adjust((newSize.width()-minD)/2, (newSize.height()-minD)/2,
+                (newSize.width()-minD)/2, (newSize.height()-minD)/2);
     painter->drawPixmap(rect, mImages[i]);
   }
 }
