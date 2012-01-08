@@ -123,7 +123,8 @@ static QWidget* createOpsWidget(
 
 ///////////////////////////////////////////////////////////////////////////
 
-PlaylistWindow::PlaylistWindow() : mState(OpStates) {
+PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destPath)
+  : mState(OpStates) {
 
   lconnect(this, SIGNAL(pushMsg(const char*)), [](){
     qDebug() << "New Message";
@@ -437,7 +438,11 @@ void PlaylistWindow::dragEnterEvent(QDragEnterEvent* e) {
 
 void PlaylistWindow::setPlaylist(QString playlistPath) {
   mPlaylistPath = playlistPath;
-  mPlaylist = pu::playlistModule().importFromFile(mPlaylistPath.toLatin1());
+  if (!mPlaylistPath.isEmpty() && !mPlaylistPath.isNull()) {
+    mPlaylist = pu::playlistModule().create();
+  } else {
+    mPlaylist = pu::playlistModule().createFromFile(mPlaylistPath.toLatin1());
+  }
   mPlaylistModel->setPlaylist( mPlaylist.get() );
   refreshState();
 }

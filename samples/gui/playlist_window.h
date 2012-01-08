@@ -40,7 +40,7 @@ class PlaylistWindow : public QWidget {
 
 public:
 
-  PlaylistWindow();
+  PlaylistWindow(const QString& playlistPath = QString(), const QString& destPath = QString())
   ~PlaylistWindow();
 
   enum OpState {

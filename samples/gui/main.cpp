@@ -61,12 +61,12 @@ static void myMessageOutput(QtMsgType type, const char* msg) {
 int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
   qInstallMsgHandler(myMessageOutput);
-  QString fileName;
+  QString fileName, filePath;
 
   if (argc >= 2)
     fileName = argv[1];
-  else
-    fileName = ".";
+  if (argc >= 3)
+    filePath = argv[2];
 
   PlaylistWindow window;//(fileName);
   window.show();
