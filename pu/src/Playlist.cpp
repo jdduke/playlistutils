@@ -68,7 +68,12 @@ const PlaylistExporter* PlaylistModuleImpl::getExporter( const std::string& exte
   return (it != mExporters.end()) ? it->second.get() : nullptr;
 }
 
-pu::PlaylistPtr PlaylistModuleImpl::importFromFile( const char* fileName ) const {
+pu::PlaylistPtr PlaylistModuleImpl::create() const
+{
+  return PlaylistPtr(new PlaylistImpl());
+}
+
+pu::PlaylistPtr PlaylistModuleImpl::createFromFile( const char* fileName ) const {
   PlaylistPtr playlist;
   auto importer( getImporter( extensionOf(fileName) ) );
   if ( importer ) {
@@ -77,7 +82,7 @@ pu::PlaylistPtr PlaylistModuleImpl::importFromFile( const char* fileName ) const
   return playlist;
 }
 
-bool PlaylistModuleImpl::exportToFile( const Playlist& playlist, const char* fileName ) const {
+bool PlaylistModuleImpl::saveToFile( const Playlist& playlist, const char* fileName ) const {
   bool success = false;
   auto exporter( getExporter( extensionOf(fileName) ) );
   if ( exporter ) {

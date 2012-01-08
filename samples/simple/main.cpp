@@ -36,9 +36,9 @@ int main(int argc, char** argv) {
   pu::PlaylistPtr playlist;
 
   if ( argc <= 1 ) {
-     playlist = module.importFromFile("test.m3u");
+     playlist = module.createFromFile("test.m3u");
   } else {
-    playlist = module.importFromFile(argv[1]);
+    playlist = module.createFromFile(argv[1]);
   }
   
   if ( playlist && playlist->songCount() > 0 ) {

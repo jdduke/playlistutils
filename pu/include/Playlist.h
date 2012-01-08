@@ -33,8 +33,9 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////
 
-  PlaylistPtr importFromFile(const char* fileName) const;
-  bool        exportToFile(const Playlist& playlist, const char* fileName) const;
+  PlaylistPtr create() const;
+  PlaylistPtr createFromFile(const char* fileName) const;
+  bool        saveToFile(const Playlist& playlist, const char* fileName) const;
 
   bool registerImporter(PlaylistImporter* importer, const char* extension);
   bool supportsImport(const char* extension) const;

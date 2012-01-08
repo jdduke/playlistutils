@@ -36,6 +36,7 @@ public:
   PlaylistModel(pu::Playlist* playlist, QObject *parent = nullptr);
 
   void setPlaylist(pu::Playlist* playlist);
+  void addSong(const char*);
 
   int rowCount() const;
   int rowCount(const QModelIndex &parent) const;
