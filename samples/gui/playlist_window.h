@@ -130,6 +130,7 @@ private:
 
   std::unique_ptr<tthread::thread> mOpThread;
   std::unique_ptr<pu::OpListener>            mOpListener;
+  std::unique_ptr<pu::FileHandler>           mFileHandler;
   std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;
 };
 

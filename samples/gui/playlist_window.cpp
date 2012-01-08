@@ -212,7 +212,7 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
       }
       if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
         return false;
-      this->mFileLabel->setText( QString(song.path()).mid(0, 120) );
+      this->mFileLabel->setText( QString(song.path()).mid(0, 70) );
       this->setFileProgress( 0 );
       int listIndex = this->mOpProgress->value();
       QModelIndex playlistModelIndex = this->mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
@@ -246,8 +246,10 @@ PlaylistWindow::PlaylistWindow() : mState(OpStates) {
       return true;
     }
   ));
-
   pu::playlistModule().setOpListener(mOpListener.get());
+
+  mFileHandler.reset( new QtFileHandler() );
+  pu::playlistModule().setFileHandler(mFileHandler.get());
 
   connect(this, SIGNAL(stateChanged()), 
           this, SLOT(refreshOpState()));
