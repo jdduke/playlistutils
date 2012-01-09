@@ -22,6 +22,7 @@ else()
   set(PU_SUFFIX)
 endif()
 
+
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
   set(PU_SIZE_TYPE x86)
 else()
