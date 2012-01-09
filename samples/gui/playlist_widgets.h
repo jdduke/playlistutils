@@ -46,6 +46,9 @@ public:
   Qt::ItemFlags flags(const QModelIndex &index) const;
   bool setData(const QModelIndex &index, const QVariant &value, int role=Qt::EditRole);
 
+signals:
+  void rowModified(QVariant);
+
 private:
 
   QVector< QString > mStatusString;

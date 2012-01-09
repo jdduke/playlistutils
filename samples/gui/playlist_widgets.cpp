@@ -108,7 +108,8 @@ bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int
     else
       return false;
 
-    emit(dataChanged(index, index));
+    emit dataChanged(index, index);
+    emit rowModified(row);
     return true;
   }
 
@@ -124,14 +125,15 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
 
 void PlaylistModel::addSong(const char* song) {
   if (mPlaylist) {
-    QModelIndex lastRow = index(rowCount()-1, 0);
-    /*QModelIndex bottomRight = index(rowCount()-1, Column_Count-1);*/
-    beginInsertRows(lastRow, 0, 1);
+    int row = rowCount()-1;
+    QModelIndex bottomRight = index(row, Column_Count-1);
+    //beginInsertRows(bottomRight, row, row);
+    beginInsertRows(QModelIndex(), row, row);
     mPlaylist->addSong(song);
     mStatusString.push_back("");
     mStatus.push_back(Status_Empty);
-    emit layoutChanged();
     endInsertRows();
+    emit rowModified((int)rowCount()-1);
   }
 }
 

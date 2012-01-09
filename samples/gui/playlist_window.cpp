@@ -123,22 +123,24 @@ static QWidget* createOpsWidget(
 PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destPath)  
   : mState(OpStates), mOpMutex(new tthread::mutex), mOpCondition(new tthread::condition_variable) {  
 
-  auto* layout                  = new QVBoxLayout(this);
+  auto* layout    = new QVBoxLayout(this);
   
   // Top View
   auto* topWidget =
     createOpsWidget(this,this,&mSongOperatorComboBox,
                     &mExecuteButton,&mCloseButton,&mFileLabel,
                     &mFileProgress,&mOpLabel,&mOpLabel2,&mOpProgress,
-                    "    Move Delete Copy           ",
+                    "Copy Move Delete Clear",
                     SLOT(executeSongOp()), SLOT(closeSongOp()), SLOT(refreshState()));
   
   // Bottom View
-  auto* bottomWidget            = new QWidget(this);
-  auto* bottomLayout            = new QHBoxLayout(bottomWidget);
+  auto* bottomWidget = new QWidget(this);
+  auto* bottomLayout = new QHBoxLayout(bottomWidget);
 
   mPlaylistView = new QTableView(bottomWidget);
   mPlaylistView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  mPlaylistView->setColumnWidth(PlaylistModel::Column_Size,   7);
+  mPlaylistView->setColumnWidth(PlaylistModel::Column_Status, 10);
   mPlaylistModel = new PlaylistModel(bottomWidget);
   mPlaylistView->setModel(mPlaylistModel);
   mPlaylistView->setItemDelegateForColumn(0, new ImageDelegate(QString(" :/image/success :/image/failure").split(" "), bottomWidget));
@@ -151,6 +153,9 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
   mPlaylistView->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(mPlaylistView, SIGNAL(customContextMenuRequested(const QPoint&)),
           this,          SLOT(customContextMenu(const QPoint&)));
+  lconnect<int>(mPlaylistModel, SIGNAL(rowModified(QVariant)), [this](int row) {
+    this->mPlaylistView->scrollTo(this->mPlaylistModel->index(row, 0));
+  });
 
   bottomLayout->addWidget( mPlaylistView );
 
@@ -202,6 +207,10 @@ void PlaylistWindow::executeSongOp() {
           break;
         case PlaylistSongOp_Copy:
           playlist->applyOp(pu::CopySongOp(this->mDestinationPath.toLatin1()));
+          break;
+        case PlaylistSongOp_Clear:
+          this->setOpProgress( (int)mPlaylist->songCount() );
+          setPlaylist("");
           break;
         default:
           break;
@@ -366,6 +375,7 @@ QString PlaylistWindow::opText() const {
   case PlaylistSongOp_Copy:
     return mDestinationPath.isEmpty() ? "Select Destination" : mDestinationPath;
   case PlaylistSongOp_Delete:
+  case PlaylistSongOp_Clear:
   default:
     return "";
   };
@@ -463,6 +473,9 @@ void PlaylistWindow::refreshState() {
   case PlaylistSongOp_Delete:
     setOpState(mPlaylist && mPlaylist->songCount() > 0 ? OpState_Valid : OpState_Invalid);
     break;
+  case PlaylistSongOp_Clear:
+    setOpState(mPlaylist && mPlaylist->songCount() > 0 ? OpState_Valid : OpState_Invalid);
+    break;
   default:
     qDebug() << " Invalid song operation";
   };
@@ -497,7 +510,7 @@ const pu::Song* PlaylistWindow::selectedSong() const {
   if( rows.empty() ) return nullptr;
 
   auto index = rows.at(0);
-  if (index.row() < 0 || index.row() >= mPlaylist->songCount()) return nullptr;
+  if (index.row() < 0 || index.row() >= (int)mPlaylist->songCount()) return nullptr;
 
   const auto& song = mPlaylist->song((size_t)index.row());
   return song.empty() ? nullptr : &song;
@@ -515,7 +528,7 @@ int PlaylistWindow::setFileProgress( int value ) {
 
 int PlaylistWindow::setOpProgress( int value ) {
   emit opProgressChanged( value );
-  if (value >= mPlaylist->songCount()) {
+  if (value >= (int)mPlaylist->songCount()) {
     setOpState(OpState_Complete);
   }
   if (mOpTime.isNull()) {

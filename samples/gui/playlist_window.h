@@ -59,9 +59,10 @@ public:
   };
 
   enum PlaylistOp {
-    PlaylistSongOp_Move = 0,
+    PlaylistSongOp_Copy = 0,
+    PlaylistSongOp_Move,
     PlaylistSongOp_Delete,
-    PlaylistSongOp_Copy,
+    PlaylistSongOp_Clear,
     PlaylistOp_New,
     PlaylistOp_Move,
     PlaylistOp_Delete,
@@ -70,8 +71,8 @@ public:
     PlaylistOp_Sort,
     PlaylistOps,
 
-    PlaylistSongOp_First = PlaylistSongOp_Move,
-    PlaylistSongOp_Last  = PlaylistSongOp_Copy,
+    PlaylistSongOp_First = PlaylistSongOp_Copy,
+    PlaylistSongOp_Last  = PlaylistSongOp_Clear,
     PlaylistSongOp_Count = PlaylistSongOp_First - PlaylistSongOp_Last,
     PlaylistOp_First     = PlaylistOp_New,
     PlaylistOp_Last      = PlaylistOp_Sort,

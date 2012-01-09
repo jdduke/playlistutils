@@ -89,5 +89,5 @@ size_t pu::StdFileHandler::size(const char* sourcePath) const {
     file.seekg( 0, std::ios::end );
     fsize = file.tellg() - fsize;
   }
-  return fsize;
+  return (size_t)fsize;
 }
