@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   if (argc >= 3)
     filePath = argv[2];
 
-  PlaylistWindow window;//(fileName);
+  PlaylistWindow window(fileName, filePath);
   window.show();
 
   return app.exec();

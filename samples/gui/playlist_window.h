@@ -37,12 +37,14 @@ QT_END_NAMESPACE
 
 class PlaylistModel;
 
+class QOpListener;
+
 class PlaylistWindow : public QWidget {
   Q_OBJECT
 
 public:
 
-  PlaylistWindow(const QString& playlistPath = QString(), const QString& destPath = QString())
+  PlaylistWindow(const QString& playlistPath = QString(), const QString& destPath = QString());
   ~PlaylistWindow();
 
   enum OpState {
@@ -81,7 +83,6 @@ public:
   const pu::Song* selectedSong() const;
 
 signals:
-  void pushMsg(const char*);
   void stateChanged();
   void fileProgressChanged(int);
   void opProgressChanged(int);
@@ -91,6 +92,7 @@ private slots:
   void refreshState();
   void setOpState(OpState);
   void executeSongOp();
+  void closeSongOp();
 
   void customContextMenu(const QPoint&);
 
@@ -109,14 +111,13 @@ private:
   QString opText() const;
 
   QWidget* createSettingsWidget(QWidget*);
+  QOpListener* createOpListener();
 
   QTableView*     mPlaylistView;
   PlaylistModel*  mPlaylistModel;
 
   QComboBox*      mPlaylistOperatorComboBox;
   QComboBox*      mSongOperatorComboBox;
-  QStackedWidget* mPlaylistViews;
-  QButtonGroup*   mViewButtonGroup;
   QLabel*         mFileLabel;
   QString         mFileText;
   QProgressBar*   mFileProgress;
@@ -125,6 +126,7 @@ private:
   QLabel*         mOpLabel2;
   QString         mDestinationPath, mPlaylistPath;
   QPushButton*    mExecuteButton;
+  QPushButton*    mCloseButton;
 
   QTime mOpTime;
   QTime mFileTime; 

@@ -9,6 +9,8 @@
 
 #include "PlaylistUtilities.h"
 
+#include <QString>
+
 class QtFileHandler : public pu::FileHandler {
 public:
   virtual bool copy(  const char* sourcePath, const char* destPath) const;
@@ -18,5 +20,9 @@ public:
   virtual bool exists(const char* sourcePath) const;
   virtual size_t size(const char* sourcePath) const;
 };
+
+inline QString toString(const pu::Song& song) {
+  return QString(song.artist()) + " - " + song.title();
+}
 
 #endif

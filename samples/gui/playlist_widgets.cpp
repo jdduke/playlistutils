@@ -5,6 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "playlist_widgets.h"
+#include "playlist_utils.h"
 
 #include <PlaylistUtilities.h>
 
@@ -65,7 +66,7 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
       return (int)mStatus.at(index.row());
     else if (index.column() == 1)
       //return mPlaylist ? mPlaylist->song(index.row()).path() : "";
-      return mPlaylist ? (QString(song.artist()) + " - " + song.title()) : "";
+      return mPlaylist ? toString(song) : "";
     else if (index.column() == 2)
       return mPlaylist ? roundToNearestHundredth((double)song.size()/(1024*1024)) : 0.;
     else if (index.column() == 3)
