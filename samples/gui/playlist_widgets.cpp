@@ -128,11 +128,13 @@ void PlaylistModel::addSong(const char* song) {
     int row = rowCount()-1;
     QModelIndex bottomRight = index(row, Column_Count-1);
     //beginInsertRows(bottomRight, row, row);
+    emit layoutAboutToBeChanged();
     beginInsertRows(QModelIndex(), row, row);
     mPlaylist->addSong(song);
     mStatusString.push_back("");
     mStatus.push_back(Status_Empty);
     endInsertRows();
+    emit layoutChanged();
     emit rowModified((int)rowCount()-1);
   }
 }

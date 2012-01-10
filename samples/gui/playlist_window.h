@@ -94,6 +94,12 @@ private slots:
   void setOpState(OpState);
   void executeSongOp();
   void closeSongOp();
+  void openPlaylistOp();
+  void openDestOp();
+  void cancelOps();
+  void beginOp(const char*, const pu::Song&);
+  void beginOp(const char*);
+  void endOp(bool);
 
   void customContextMenu(const QPoint&);
 
@@ -104,10 +110,12 @@ private:
   int setFileProgress(int value);
   int setOpProgress(int value);
 
+  size_t songCount() const;
+
   OpState    currentState() const;
   PlaylistOp currentOp() const;
   bool       readOnly() const;
-  
+
   QString fileText() const;
   QString opText() const;
 
@@ -119,9 +127,11 @@ private:
 
   QComboBox*      mPlaylistOperatorComboBox;
   QComboBox*      mSongOperatorComboBox;
+  QPushButton*    mFileButton;
   QLabel*         mFileLabel;
   QString         mFileText;
   QProgressBar*   mFileProgress;
+  QPushButton*    mOpButton;
   QLabel*         mOpLabel;
   QProgressBar*   mOpProgress;
   QLabel*         mOpLabel2;
@@ -130,7 +140,7 @@ private:
   QPushButton*    mCloseButton;
 
   QTime mOpTime;
-  QTime mFileTime; 
+  QTime mFileTime;
 
   OpState mState;
 
