@@ -59,12 +59,19 @@ static QString GuiStr[STRING_COUNT] = {
   QWidget::tr("Open Destination")
 };
 
-
+/////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
 static inline bool inRange(const T& val, const T& low, const T& high) {
   return (low <= val && val <= high);
 }
+
+template<typename T>
+static inline bool bound(const T& val, const T& low, const T& high) {
+  return std::max(low, std::min(val, high));
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 class QOpListener : public pu::OpListener {
 public:
@@ -97,18 +104,21 @@ static QWidget* createOpsWidget(
   QWidget* parentCallback,
   QWidget* parent,
   QComboBox** comboBox,
+  QComboBox** behaviorComboBox,
   QPushButton** actionButton,
   QPushButton** closeButton,
   QPushButton** fileButton,
   QProgressBar** fileProgress,
   QPushButton** opButton,
-  QLabel** opLabel2,
+  QLabel** opLabel,
   QProgressBar** opProgress,
   const char* ops,
+  const char* behaviors,
   const char* executeOp,
   const char* closeOp,
   const char* fileOp,
   const char* opOp,
+  const char* behaviorOp,
   const char* refreshOp) {
 
   auto* widget              = new QWidget(parent);
@@ -123,20 +133,25 @@ static QWidget* createOpsWidget(
   *actionButton             = new QPushButton(GuiStr[EXECUTE], midWidget);
   *fileButton               = new QPushButton(GuiStr[LOAD_PLAYLIST], topWidget);
   *opButton                 = new QPushButton(GuiStr[LOAD_DESTINATION], bottomWidget);
-  *opLabel2                 = new QLabel("", bottomWidget);
+  *opLabel                  = new QLabel("", bottomWidget);
   *fileProgress             = new QProgressBar(widget);
   *opProgress               = new QProgressBar(widget);
   *comboBox                 = new QComboBox(midWidget);
+  *behaviorComboBox         = new FlatComboBox(topWidget);
 
   (*fileProgress)->setMinimum(0);
   (*opProgress)->setMinimum(0);
+  (*fileProgress)->setTextVisible(true);
+  (*opProgress)->setTextVisible(true);
   (*fileButton)->setFlat(true);
   (*opButton)->setFlat(true);
   (*comboBox)->addItems( QString(ops).split(";",QString::SkipEmptyParts) );
+  (*behaviorComboBox)->addItems( QString(behaviors).split(";",QString::SkipEmptyParts) );
 
   topLayout->addWidget(*fileButton);
-  topLayout->addSpacing(30);
+  //topLayout->addSpacing(30);
   topLayout->addStretch();
+  topLayout->addWidget(*behaviorComboBox);
 
   midLayout->addSpacing(10);
   midLayout->addWidget(new QLabel(GuiStr[ACTION] + ": ", widget));
@@ -149,7 +164,7 @@ static QWidget* createOpsWidget(
 
   bottomLayout->addWidget(*opButton);
   bottomLayout->addStretch();
-  bottomLayout->addWidget(*opLabel2);
+  bottomLayout->addWidget(*opLabel);
 
   layout->setSpacing(0);
   layout->addWidget(topWidget);
@@ -163,11 +178,12 @@ static QWidget* createOpsWidget(
 
   (*comboBox)->setCurrentIndex(0);
 
-  QWidget::connect(*actionButton, SIGNAL(clicked()),                parentCallback, executeOp);
-  QWidget::connect(*fileButton,   SIGNAL(clicked()),                parentCallback, fileOp);
-  QWidget::connect(*opButton,     SIGNAL(clicked()),                parentCallback, opOp);
-  QWidget::connect(*closeButton,  SIGNAL(clicked()),                parentCallback, closeOp);
-  QWidget::connect(*comboBox,     SIGNAL(currentIndexChanged(int)), parentCallback, refreshOp);
+  QWidget::connect(*actionButton,     SIGNAL(clicked()),                parentCallback, executeOp);
+  QWidget::connect(*fileButton,       SIGNAL(clicked()),                parentCallback, fileOp);
+  QWidget::connect(*opButton,         SIGNAL(clicked()),                parentCallback, opOp);
+  QWidget::connect(*closeButton,      SIGNAL(clicked()),                parentCallback, closeOp);
+  QWidget::connect(*comboBox,         SIGNAL(currentIndexChanged(int)), parentCallback, refreshOp);
+  QWidget::connect(*behaviorComboBox, SIGNAL(currentIndexChanged(int)), parentCallback, behaviorOp);
 
   return widget;
 }
@@ -175,7 +191,10 @@ static QWidget* createOpsWidget(
 ///////////////////////////////////////////////////////////////////////////
 
 PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destPath)
-  : mState(OpStates), mOpMutex(new tthread::mutex), mOpCondition(new tthread::condition_variable) {
+  : mState(OpStates),
+    mFileBehavior(FileBehavior_Default),
+    mOpMutex(new tthread::mutex),
+    mOpCondition(new tthread::condition_variable) {
 
   auto* layout    = new QVBoxLayout(this);
 
@@ -184,18 +203,21 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
     createOpsWidget(this,
                     this,
                     &mSongOperatorComboBox,
+                    &mFileBehaviorComboBox,
                     &mExecuteButton,
                     &mCloseButton,
                     &mFileButton,
                     &mFileProgress,
                     &mOpButton,
-                    &mOpLabel2,
+                    &mOpLabel,
                     &mOpProgress,
                     "Copy Songs;Move Songs;Delete Songs;Clear Songs",
+                    "Replace ;Replace Older  ;Skip  ;Ask   ",
                     SLOT(executeSongOp()),
                     SLOT(closeSongOp()),
                     SLOT(openPlaylistOp()),
                     SLOT(openDestOp()),
+                    SLOT(refreshBehavior()),
                     SLOT(refreshState()));
 
   // Bottom View
@@ -265,7 +287,7 @@ PlaylistWindow::~PlaylistWindow() {
     mState = OpState_Shutdown;
     mOpCondition->notify_all();
   }
-  
+
   if (mOpThread && mOpThread->joinable())
     mOpThread->join();
 }
@@ -362,6 +384,7 @@ void PlaylistWindow::beginOp(const char* opName, const pu::Song& song) {
   if (!songString.isEmpty() && !songString.isNull())
     mFileButton->setText( songString.mid(0, 60) );
   setFileProgress( 0 );
+  setWindowTitle(QString(opName) + ": " + mOpProgress->format());
 }
 
 void PlaylistWindow::beginOp(const char* opName) {
@@ -370,6 +393,7 @@ void PlaylistWindow::beginOp(const char* opName) {
   mPlaylistModel->setData( playlistModelIndex, opName );
   mFileButton->setText( opName );
   mFileProgress->setValue( 0 );
+  setWindowTitle(QString(opName) + ": " + mOpProgress->format());
 }
 
 void PlaylistWindow::endOp(bool success) {
@@ -382,7 +406,7 @@ void PlaylistWindow::endOp(bool success) {
   auto sizeInMB = (double)mPlaylist->song(listIndex).size() / (1024*1024);
   auto timeInS  = (double)setFileProgress( success ? mFileProgress->maximum() : 0 ) / 1000;
   if (timeInS > 0.) {
-    mOpLabel2->setText(QString::number(sizeInMB/timeInS, 'g', 4) + " MB/s");
+    mOpLabel->setText(QString::number(sizeInMB/timeInS, 'g', 4) + " MB/s");
   }
 }
 
@@ -443,17 +467,29 @@ QOpListener* PlaylistWindow::createOpListener() {
   );
 }
 
+void PlaylistWindow::refreshBehavior() {
+  if (inRange(mFileBehaviorComboBox->currentIndex(),(int)FileBehavior_First,(int)FileBehavior_Last)) {
+    mFileBehavior = (FileBehavior)mFileBehaviorComboBox->currentIndex();
+  }
+}
+
 void PlaylistWindow::refreshOpState() {
   mFileButton->setText(fileText());
   mOpButton->setText(opText());
-  mOpLabel2->setText("");
-  mSongOperatorComboBox->setDisabled(false);
+  mOpLabel->setText("");
+  mCloseButton->setText(GuiStr[CLOSE]);
+
+  bool ro = readOnly();
+  mSongOperatorComboBox->setDisabled(ro);
+  mFileBehaviorComboBox->setDisabled(ro);
+  mFileButton->setDisabled(ro);
+  mOpButton->setDisabled(ro);
+
   mExecuteButton->setEnabled(true);
   mExecuteButton->setText(GuiStr[EXECUTE]);
   mCloseButton->setEnabled(true);
-  mFileButton->setEnabled(true);
-  mOpButton->setEnabled(true);
-  mCloseButton->setText(GuiStr[CLOSE]);
+  setWindowTitle(GuiStr[TITLE]);
+
   switch (mState) {
   case OpState_Invalid:
     mExecuteButton->setEnabled(false);
@@ -464,26 +500,17 @@ void PlaylistWindow::refreshOpState() {
   case OpState_Executing:
     mExecuteButton->setText(GuiStr[PAUSE]);
     mCloseButton->setText(GuiStr[CANCEL]);
-    mSongOperatorComboBox->setDisabled(true);
     mFileProgress->setMaximum(100);
-    mFileButton->setEnabled(false);
-    mOpButton->setEnabled(false);
     mOpProgress->setMaximum((int)songCount());
     break;
   case OpState_Cancel:
     mExecuteButton->setEnabled(false);
-    mSongOperatorComboBox->setDisabled(true);
-    mFileButton->setEnabled(false);
-    mOpButton->setEnabled(false);
     mCloseButton->setText(GuiStr[CANCELLING]);
     mCloseButton->setEnabled(false);
     break;
   case OpState_Paused:
     mExecuteButton->setText(GuiStr[RESUME]);
-    mFileButton->setEnabled(false);
-    mOpButton->setEnabled(false);
     mCloseButton->setText(GuiStr[CANCEL]);
-    mSongOperatorComboBox->setDisabled(true);
     break;
   case OpState_Complete:
     mExecuteButton->setEnabled(false);
