@@ -38,12 +38,14 @@ enum GuiStringKey {
   PAUSE,
   OPEN_PLAYLIST,
   OPEN_DESTINATION,
+  OP_LIST,
+  BEHAVIOR_LIST,
   STRING_COUNT
 };
 
 static QString GuiStr[STRING_COUNT] = {
-  QWidget::tr("Drop playlist here"),
-  QWidget::tr("Drop destination here"),
+  QWidget::tr("Click or drop playlist here"),
+  QWidget::tr("Click or drop destination here"),
   QWidget::tr("Close"),
   QWidget::tr("Cancel"),
   QWidget::tr("Execute"),
@@ -56,7 +58,9 @@ static QString GuiStr[STRING_COUNT] = {
   QWidget::tr("Cancelling"),
   QWidget::tr("Pause"),
   QWidget::tr("Open Playlist"),
-  QWidget::tr("Open Destination")
+  QWidget::tr("Open Destination"),
+  QString("Copy Songs;Move Songs;Delete Songs;Clear Songs"),
+  QString("Replace ;Replace Older  ;Skip  ;Ask   "),
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -211,8 +215,8 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
                     &mOpButton,
                     &mOpLabel,
                     &mOpProgress,
-                    "Copy Songs;Move Songs;Delete Songs;Clear Songs",
-                    "Replace ;Replace Older  ;Skip  ;Ask   ",
+                    GuiStr[OP_LIST].toLatin1(),
+                    GuiStr[BEHAVIOR_LIST].toLatin1(),
                     SLOT(executeSongOp()),
                     SLOT(closeSongOp()),
                     SLOT(openPlaylistOp()),
@@ -343,7 +347,7 @@ void PlaylistWindow::closeSongOp() {
 
 void PlaylistWindow::openPlaylistOp() {
   QFileInfo playlistFile( QFileDialog::getOpenFileName(this,
-                                                       GuiStr[OPEN_PLAYLIST],//"Open Playlist"),
+                                                       GuiStr[OPEN_PLAYLIST],
                                                        "",
                                                        tr("Playlist Files (*.m3u *.pls *.wpl)")) );
   if (playlistFile.exists())
@@ -351,12 +355,9 @@ void PlaylistWindow::openPlaylistOp() {
 }
 
 void PlaylistWindow::openDestOp() {
-  QFileInfo destinationDir( QFileDialog::getOpenFileName(this,
-                                                       GuiStr[OPEN_DESTINATION],//"Destination Path"),
-                                                       "",
-                                                       "",
-                                                       0,
-                                                       QFileDialog::ShowDirsOnly) );
+  QFileInfo destinationDir( QFileDialog::getExistingDirectory(this,
+                                                              GuiStr[OPEN_DESTINATION]) );
+
   if (destinationDir.exists() && destinationDir.isDir())
     setDestination(destinationDir.absoluteFilePath());
 }
@@ -367,7 +368,6 @@ void PlaylistWindow::cancelOps() {
     auto playlistModelIndexS = mPlaylistModel->index( i, PlaylistModel::Column_Status );
     mPlaylistModel->setData( playlistModelIndexI, PlaylistModel::Status_Failure );
     mPlaylistModel->setData( playlistModelIndexS, GuiStr[CANCELLED] );
-    //setOpProgress( std::min(i + 1, mOpProgress->maximum()) );
   }
   if (songCount() > 0)
     mPlaylistView->scrollTo(mPlaylistModel->index(0, 0));
