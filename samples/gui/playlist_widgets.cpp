@@ -128,7 +128,7 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
 
 void PlaylistModel::addSong(const char* song) {
   if (mPlaylist) {
-    int row = rowCount()-1;
+    int row = rowCount();
     QModelIndex bottomRight = index(row, Column_Count-1);
     //beginInsertRows(bottomRight, row, row);
     emit layoutAboutToBeChanged();
@@ -138,7 +138,7 @@ void PlaylistModel::addSong(const char* song) {
     mStatus.push_back(Status_Empty);
     endInsertRows();
     emit layoutChanged();
-    emit rowModified((int)rowCount()-1);
+    emit rowModified(row);
   }
 }
 

@@ -96,9 +96,11 @@ public:
   const pu::Song* selectedSong() const;
 
 signals:
+  void cancelled();
   void stateChanged();
   void fileProgressChanged(int);
   void opProgressChanged(int);
+  void titleChanged(const QString&);
 
 private slots:
   void refreshOpState();
@@ -110,9 +112,10 @@ private slots:
   void openPlaylistOp();
   void openDestOp();
   void cancelOps();
-  void beginOp(const char*, const pu::Song&);
-  void beginOp(const char*);
-  void endOp(bool);
+  void clearOps();
+  bool beginOp(const char*, const pu::Song&);
+  bool beginOp(const char*);
+  bool endOp(bool);
 
   void customContextMenu(const QPoint&);
 
