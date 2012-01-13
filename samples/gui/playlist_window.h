@@ -149,7 +149,8 @@ private:
   QPushButton*    mOpButton;
   QLabel*         mOpLabel;
   QProgressBar*   mOpProgress;
-  QString         mDestinationPath, mPlaylistPath;
+  QString         mDestinationPath;
+  QString         mPlaylistPath;
   QPushButton*    mExecuteButton;
   QPushButton*    mCloseButton;
 
