@@ -38,12 +38,14 @@ enum GuiStringKey {
   PAUSE,
   OPEN_PLAYLIST,
   OPEN_DESTINATION,
+  OP_LIST,
+  BEHAVIOR_LIST,
   STRING_COUNT
 };
 
 static QString GuiStr[STRING_COUNT] = {
-  QWidget::tr("Drop playlist here"),
-  QWidget::tr("Drop destination here"),
+  QWidget::tr("Click or drop playlist here"),
+  QWidget::tr("Click or drop destination here"),
   QWidget::tr("Close"),
   QWidget::tr("Cancel"),
   QWidget::tr("Execute"),
@@ -56,15 +58,24 @@ static QString GuiStr[STRING_COUNT] = {
   QWidget::tr("Cancelling"),
   QWidget::tr("Pause"),
   QWidget::tr("Open Playlist"),
-  QWidget::tr("Open Destination")
+  QWidget::tr("Open Destination"),
+  QString("Copy Songs;Move Songs;Delete Songs;Clear Songs"),
+  QString("Replace ;Replace Older  ;Skip  ;Ask   "),
 };
 
-
+/////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
 static inline bool inRange(const T& val, const T& low, const T& high) {
   return (low <= val && val <= high);
 }
+
+template<typename T>
+static inline bool bound(const T& val, const T& low, const T& high) {
+  return std::max(low, std::min(val, high));
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 class QOpListener : public pu::OpListener {
 public:
@@ -97,18 +108,21 @@ static QWidget* createOpsWidget(
   QWidget* parentCallback,
   QWidget* parent,
   QComboBox** comboBox,
+  QComboBox** behaviorComboBox,
   QPushButton** actionButton,
   QPushButton** closeButton,
   QPushButton** fileButton,
   QProgressBar** fileProgress,
   QPushButton** opButton,
-  QLabel** opLabel2,
+  QLabel** opLabel,
   QProgressBar** opProgress,
   const char* ops,
+  const char* behaviors,
   const char* executeOp,
   const char* closeOp,
   const char* fileOp,
   const char* opOp,
+  const char* behaviorOp,
   const char* refreshOp) {
 
   auto* widget              = new QWidget(parent);
@@ -123,20 +137,25 @@ static QWidget* createOpsWidget(
   *actionButton             = new QPushButton(GuiStr[EXECUTE], midWidget);
   *fileButton               = new QPushButton(GuiStr[LOAD_PLAYLIST], topWidget);
   *opButton                 = new QPushButton(GuiStr[LOAD_DESTINATION], bottomWidget);
-  *opLabel2                 = new QLabel("", bottomWidget);
+  *opLabel                  = new QLabel("", bottomWidget);
   *fileProgress             = new QProgressBar(widget);
   *opProgress               = new QProgressBar(widget);
   *comboBox                 = new QComboBox(midWidget);
+  *behaviorComboBox         = new FlatComboBox(topWidget);
 
   (*fileProgress)->setMinimum(0);
   (*opProgress)->setMinimum(0);
+  (*fileProgress)->setTextVisible(true);
+  (*opProgress)->setTextVisible(true);
   (*fileButton)->setFlat(true);
   (*opButton)->setFlat(true);
   (*comboBox)->addItems( QString(ops).split(";",QString::SkipEmptyParts) );
+  (*behaviorComboBox)->addItems( QString(behaviors).split(";",QString::SkipEmptyParts) );
 
   topLayout->addWidget(*fileButton);
-  topLayout->addSpacing(30);
+  //topLayout->addSpacing(30);
   topLayout->addStretch();
+  topLayout->addWidget(*behaviorComboBox);
 
   midLayout->addSpacing(10);
   midLayout->addWidget(new QLabel(GuiStr[ACTION] + ": ", widget));
@@ -149,7 +168,7 @@ static QWidget* createOpsWidget(
 
   bottomLayout->addWidget(*opButton);
   bottomLayout->addStretch();
-  bottomLayout->addWidget(*opLabel2);
+  bottomLayout->addWidget(*opLabel);
 
   layout->setSpacing(0);
   layout->addWidget(topWidget);
@@ -163,11 +182,12 @@ static QWidget* createOpsWidget(
 
   (*comboBox)->setCurrentIndex(0);
 
-  QWidget::connect(*actionButton, SIGNAL(clicked()),                parentCallback, executeOp);
-  QWidget::connect(*fileButton,   SIGNAL(clicked()),                parentCallback, fileOp);
-  QWidget::connect(*opButton,     SIGNAL(clicked()),                parentCallback, opOp);
-  QWidget::connect(*closeButton,  SIGNAL(clicked()),                parentCallback, closeOp);
-  QWidget::connect(*comboBox,     SIGNAL(currentIndexChanged(int)), parentCallback, refreshOp);
+  QWidget::connect(*actionButton,     SIGNAL(clicked()),                parentCallback, executeOp);
+  QWidget::connect(*fileButton,       SIGNAL(clicked()),                parentCallback, fileOp);
+  QWidget::connect(*opButton,         SIGNAL(clicked()),                parentCallback, opOp);
+  QWidget::connect(*closeButton,      SIGNAL(clicked()),                parentCallback, closeOp);
+  QWidget::connect(*comboBox,         SIGNAL(currentIndexChanged(int)), parentCallback, refreshOp);
+  QWidget::connect(*behaviorComboBox, SIGNAL(currentIndexChanged(int)), parentCallback, behaviorOp);
 
   return widget;
 }
@@ -175,7 +195,10 @@ static QWidget* createOpsWidget(
 ///////////////////////////////////////////////////////////////////////////
 
 PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destPath)
-  : mState(OpStates), mOpMutex(new tthread::mutex), mOpCondition(new tthread::condition_variable) {
+  : mState(OpStates),
+    mFileBehavior(FileBehavior_Default),
+    mOpMutex(new tthread::mutex),
+    mOpCondition(new tthread::condition_variable) {
 
   auto* layout    = new QVBoxLayout(this);
 
@@ -184,18 +207,21 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
     createOpsWidget(this,
                     this,
                     &mSongOperatorComboBox,
+                    &mFileBehaviorComboBox,
                     &mExecuteButton,
                     &mCloseButton,
                     &mFileButton,
                     &mFileProgress,
                     &mOpButton,
-                    &mOpLabel2,
+                    &mOpLabel,
                     &mOpProgress,
-                    "Copy Songs;Move Songs;Delete Songs;Clear Songs",
+                    GuiStr[OP_LIST].toLatin1(),
+                    GuiStr[BEHAVIOR_LIST].toLatin1(),
                     SLOT(executeSongOp()),
                     SLOT(closeSongOp()),
                     SLOT(openPlaylistOp()),
                     SLOT(openDestOp()),
+                    SLOT(refreshBehavior()),
                     SLOT(refreshState()));
 
   // Bottom View
@@ -242,6 +268,12 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
   connect(this, SIGNAL(stateChanged()),
           this, SLOT(refreshOpState()));
 
+  connect(this, SIGNAL(cancelled()),
+          this, SLOT(cancelOps()));
+
+  connect(this, SIGNAL(titleChanged(const QString&)),
+          this, SLOT(setWindowTitle(const QString&)));
+
   connect(this,          SIGNAL(fileProgressChanged(int)),
           mFileProgress, SLOT(setValue(int)), Qt::BlockingQueuedConnection);
 
@@ -251,7 +283,7 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
   setPlaylist(playlistPath);
   setDestination(destPath);
 
-  setWindowTitle(GuiStr[TITLE]);
+  emit titleChanged(GuiStr[TITLE]);
   setAcceptDrops(true);
 }
 
@@ -265,7 +297,7 @@ PlaylistWindow::~PlaylistWindow() {
     mState = OpState_Shutdown;
     mOpCondition->notify_all();
   }
-  
+
   if (mOpThread && mOpThread->joinable())
     mOpThread->join();
 }
@@ -300,6 +332,7 @@ void PlaylistWindow::executeSongOp() {
       }
     };
     setOpState(OpState_Executing);
+    clearOps();
     mOpThread.reset( new tthread::thread(executeOp, (void*)currentOp()) );
   } else {
     setOpState(OpState_Paused);
@@ -308,12 +341,7 @@ void PlaylistWindow::executeSongOp() {
 
 void PlaylistWindow::closeSongOp() {
   if (readOnly()) {
-    setOpState(OpState_Cancel);
-    if (mOpThread->joinable()) {
-      mOpThread->join();
-    }
-    cancelOps();
-    setOpState(OpState_Valid);
+    emit cancelled();
   } else {
     QApplication::quit();
   }
@@ -321,7 +349,7 @@ void PlaylistWindow::closeSongOp() {
 
 void PlaylistWindow::openPlaylistOp() {
   QFileInfo playlistFile( QFileDialog::getOpenFileName(this,
-                                                       GuiStr[OPEN_PLAYLIST],//"Open Playlist"),
+                                                       GuiStr[OPEN_PLAYLIST],
                                                        "",
                                                        tr("Playlist Files (*.m3u *.pls *.wpl)")) );
   if (playlistFile.exists())
@@ -329,29 +357,43 @@ void PlaylistWindow::openPlaylistOp() {
 }
 
 void PlaylistWindow::openDestOp() {
-  QFileInfo destinationDir( QFileDialog::getOpenFileName(this,
-                                                       GuiStr[OPEN_DESTINATION],//"Destination Path"),
-                                                       "",
-                                                       "",
-                                                       0,
-                                                       QFileDialog::ShowDirsOnly) );
+  QFileInfo destinationDir( QFileDialog::getExistingDirectory(this,
+                                                              GuiStr[OPEN_DESTINATION]) );
+
   if (destinationDir.exists() && destinationDir.isDir())
     setDestination(destinationDir.absoluteFilePath());
 }
 
 void PlaylistWindow::cancelOps() {
+  setOpState(OpState_Cancel);
+  if (mOpThread->joinable()) {
+    mOpThread->join();
+  }
+
   for (auto i = mOpProgress->value(); i < (int)songCount(); ++i) {
     auto playlistModelIndexI = mPlaylistModel->index( i, PlaylistModel::Column_Image );
     auto playlistModelIndexS = mPlaylistModel->index( i, PlaylistModel::Column_Status );
     mPlaylistModel->setData( playlistModelIndexI, PlaylistModel::Status_Failure );
     mPlaylistModel->setData( playlistModelIndexS, GuiStr[CANCELLED] );
-    //setOpProgress( std::min(i + 1, mOpProgress->maximum()) );
+  }
+  if (songCount() > 0)
+    mPlaylistView->scrollTo(mPlaylistModel->index(0, 0));
+
+  setOpState(OpState_Valid);
+}
+
+void PlaylistWindow::clearOps() {
+  for (auto i = 0; i < (int)songCount(); ++i) {
+    auto playlistModelIndexI = mPlaylistModel->index( i, PlaylistModel::Column_Image );
+    auto playlistModelIndexS = mPlaylistModel->index( i, PlaylistModel::Column_Status );
+    mPlaylistModel->setData( playlistModelIndexI, PlaylistModel::Status_Empty );
+    mPlaylistModel->setData( playlistModelIndexS, "" );
   }
   if (songCount() > 0)
     mPlaylistView->scrollTo(mPlaylistModel->index(0, 0));
 }
 
-void PlaylistWindow::beginOp(const char* opName, const pu::Song& song) {
+bool PlaylistWindow::beginOp(const char* opName, const pu::Song& song) {
   auto listIndex          = mOpProgress->value();
   auto playlistModelIndex = mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
   mPlaylistModel->setData( playlistModelIndex, opName );
@@ -362,17 +404,21 @@ void PlaylistWindow::beginOp(const char* opName, const pu::Song& song) {
   if (!songString.isEmpty() && !songString.isNull())
     mFileButton->setText( songString.mid(0, 60) );
   setFileProgress( 0 );
+  emit titleChanged(QString(opName) + ": " + mOpProgress->text());
+  return true;
 }
 
-void PlaylistWindow::beginOp(const char* opName) {
+bool PlaylistWindow::beginOp(const char* opName) {
   auto listIndex          = mOpProgress->value();
   auto playlistModelIndex = mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
   mPlaylistModel->setData( playlistModelIndex, opName );
   mFileButton->setText( opName );
   mFileProgress->setValue( 0 );
+  emit titleChanged(QString(opName) + ": " + mOpProgress->text());
+  return true;
 }
 
-void PlaylistWindow::endOp(bool success) {
+bool PlaylistWindow::endOp(bool success) {
   auto listIndex           = mOpProgress->value();
   auto playlistModelIndexI = mPlaylistModel->index( listIndex, PlaylistModel::Column_Image );
   auto playlistModelIndexS = mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
@@ -382,8 +428,9 @@ void PlaylistWindow::endOp(bool success) {
   auto sizeInMB = (double)mPlaylist->song(listIndex).size() / (1024*1024);
   auto timeInS  = (double)setFileProgress( success ? mFileProgress->maximum() : 0 ) / 1000;
   if (timeInS > 0.) {
-    mOpLabel2->setText(QString::number(sizeInMB/timeInS, 'g', 4) + " MB/s");
+    mOpLabel->setText(QString::number(sizeInMB/timeInS, 'g', 4) + " MB/s");
   }
+  return true;
 }
 
 PlaylistWindow::OpState PlaylistWindow::currentState() const {
@@ -409,51 +456,54 @@ QWidget* PlaylistWindow::createSettingsWidget(QWidget* parent) {
 }
 
 QOpListener* PlaylistWindow::createOpListener() {
+  auto handleCancel = [this]() -> bool {
+    //tthread::lock_guard<tthread::mutex> guard(*this->mOpMutex);
+    return !(this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel);
+  };
+  auto handlePause = [this]() -> bool {
+    tthread::lock_guard<tthread::mutex> guard(*this->mOpMutex);
+    while (this->currentState() == PlaylistWindow::OpState_Paused) {
+      this->mOpCondition->wait(*this->mOpMutex);
+    }
+    return true;
+  };
+
   return new QOpListener(
-    [this](const char* opName, const pu::Song& song) -> bool {
-      {
-        tthread::lock_guard<tthread::mutex> guard(*this->mOpMutex);
-        while (this->currentState() == PlaylistWindow::OpState_Paused) {
-          this->mOpCondition->wait(*this->mOpMutex);
-        }
-      }
-      if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
-        return false;
-      this->beginOp(opName, song);
-      return true;
-  },
-    [this](const char* opName) -> bool {
-      {
-        tthread::lock_guard<tthread::mutex> guard(*this->mOpMutex);
-        if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
-          return false;
-      }
-      this->beginOp(opName);
-      return true;
-  },
-    [this](bool success) -> bool {
-      {
-        tthread::lock_guard<tthread::mutex> guard(*this->mOpMutex);
-        if (this->currentState() == OpState_Shutdown || this->currentState() == OpState_Cancel)
-          return false;
-      }
-      this->endOp(success);
-      return true;
-  }
+    [=,this](const char* opName, const pu::Song& song) -> bool {
+      return handlePause() && handleCancel() && this->beginOp(opName, song);
+    },
+    [=,this](const char* opName) -> bool {
+      return handlePause() && handleCancel() && this->beginOp(opName);
+    },
+    [=,this](bool success) -> bool {
+      return handleCancel() && this->endOp(success);
+    }
   );
+}
+
+void PlaylistWindow::refreshBehavior() {
+  if (inRange(mFileBehaviorComboBox->currentIndex(),(int)FileBehavior_First,(int)FileBehavior_Last)) {
+    mFileBehavior = (FileBehavior)mFileBehaviorComboBox->currentIndex();
+  }
 }
 
 void PlaylistWindow::refreshOpState() {
   mFileButton->setText(fileText());
   mOpButton->setText(opText());
-  mOpLabel2->setText("");
-  mSongOperatorComboBox->setDisabled(false);
+  mOpLabel->setText("");
+  mCloseButton->setText(GuiStr[CLOSE]);
+
+  bool ro = readOnly();
+  mSongOperatorComboBox->setDisabled(ro);
+  mFileBehaviorComboBox->setDisabled(ro);
+  mFileButton->setDisabled(ro);
+  mOpButton->setDisabled(ro);
+
   mExecuteButton->setEnabled(true);
   mExecuteButton->setText(GuiStr[EXECUTE]);
   mCloseButton->setEnabled(true);
-  mFileButton->setEnabled(true);
-  mOpButton->setEnabled(true);
-  mCloseButton->setText(GuiStr[CLOSE]);
+  setWindowTitle(GuiStr[TITLE]);
+
   switch (mState) {
   case OpState_Invalid:
     mExecuteButton->setEnabled(false);
@@ -464,26 +514,18 @@ void PlaylistWindow::refreshOpState() {
   case OpState_Executing:
     mExecuteButton->setText(GuiStr[PAUSE]);
     mCloseButton->setText(GuiStr[CANCEL]);
-    mSongOperatorComboBox->setDisabled(true);
     mFileProgress->setMaximum(100);
-    mFileButton->setEnabled(false);
-    mOpButton->setEnabled(false);
     mOpProgress->setMaximum((int)songCount());
     break;
   case OpState_Cancel:
     mExecuteButton->setEnabled(false);
-    mSongOperatorComboBox->setDisabled(true);
-    mFileButton->setEnabled(false);
-    mOpButton->setEnabled(false);
-    mCloseButton->setText(GuiStr[CANCELLING]);
     mCloseButton->setEnabled(false);
+    mExecuteButton->setText(GuiStr[CANCELLING]);
+    mCloseButton->setText(GuiStr[CANCELLING]);
     break;
   case OpState_Paused:
     mExecuteButton->setText(GuiStr[RESUME]);
-    mFileButton->setEnabled(false);
-    mOpButton->setEnabled(false);
     mCloseButton->setText(GuiStr[CANCEL]);
-    mSongOperatorComboBox->setDisabled(true);
     break;
   case OpState_Complete:
     mExecuteButton->setEnabled(false);
@@ -505,7 +547,6 @@ QString PlaylistWindow::opText() const {
   default:
     return "";
   };
-
 }
 
 QString PlaylistWindow::fileText() const {

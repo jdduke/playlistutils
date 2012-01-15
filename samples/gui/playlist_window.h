@@ -79,17 +79,32 @@ public:
     PlaylistOp_Count     = PlaylistOp_First - PlaylistOp_Last,
   };
 
+  enum FileBehavior {
+    FileBehavior_Replace = 0,
+    FileBehavior_Older,
+    FileBehavior_Skip,
+    FileBehavior_Query,
+    FileBehaviors,
+
+    FileBehavior_Default = FileBehavior_Skip,
+    FileBehavior_First   = FileBehavior_Replace,
+    FileBehavior_Last    = FileBehavior_Query
+  };
+
   virtual void dragEnterEvent(QDragEnterEvent*);
   virtual void dropEvent(QDropEvent*);
   const pu::Song* selectedSong() const;
 
 signals:
+  void cancelled();
   void stateChanged();
   void fileProgressChanged(int);
   void opProgressChanged(int);
+  void titleChanged(const QString&);
 
 private slots:
   void refreshOpState();
+  void refreshBehavior();
   void refreshState();
   void setOpState(OpState);
   void executeSongOp();
@@ -97,9 +112,10 @@ private slots:
   void openPlaylistOp();
   void openDestOp();
   void cancelOps();
-  void beginOp(const char*, const pu::Song&);
-  void beginOp(const char*);
-  void endOp(bool);
+  void clearOps();
+  bool beginOp(const char*, const pu::Song&);
+  bool beginOp(const char*);
+  bool endOp(bool);
 
   void customContextMenu(const QPoint&);
 
@@ -125,17 +141,16 @@ private:
   QTableView*     mPlaylistView;
   PlaylistModel*  mPlaylistModel;
 
-  QComboBox*      mPlaylistOperatorComboBox;
   QComboBox*      mSongOperatorComboBox;
+  QComboBox*      mFileBehaviorComboBox;
   QPushButton*    mFileButton;
-  QLabel*         mFileLabel;
   QString         mFileText;
   QProgressBar*   mFileProgress;
   QPushButton*    mOpButton;
   QLabel*         mOpLabel;
   QProgressBar*   mOpProgress;
-  QLabel*         mOpLabel2;
-  QString         mDestinationPath, mPlaylistPath;
+  QString         mDestinationPath;
+  QString         mPlaylistPath;
   QPushButton*    mExecuteButton;
   QPushButton*    mCloseButton;
 
@@ -143,13 +158,14 @@ private:
   QTime mFileTime;
 
   OpState mState;
+  FileBehavior mFileBehavior;
 
   std::unique_ptr<tthread::thread>             mOpThread;
   std::unique_ptr<tthread::mutex>              mOpMutex;
   std::unique_ptr<tthread::condition_variable> mOpCondition;
-  std::unique_ptr<pu::OpListener>            mOpListener;
-  std::unique_ptr<pu::FileHandler>           mFileHandler;
-  std::unique_ptr<pu::Playlist,pu::Releaser> mPlaylist;
+  std::unique_ptr<pu::OpListener>              mOpListener;
+  std::unique_ptr<pu::FileHandler>             mFileHandler;
+  std::unique_ptr<pu::Playlist,pu::Releaser>   mPlaylist;
 };
 
 #endif

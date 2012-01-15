@@ -10,7 +10,10 @@
 #include <PlaylistUtilities.h>
 
 #include <QFileInfo>
+#include <QLineEdit>
+#include <QMouseEvent>
 #include <QPainter>
+#include <QStylePainter>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -125,7 +128,7 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
 
 void PlaylistModel::addSong(const char* song) {
   if (mPlaylist) {
-    int row = rowCount()-1;
+    int row = rowCount();
     QModelIndex bottomRight = index(row, Column_Count-1);
     //beginInsertRows(bottomRight, row, row);
     emit layoutAboutToBeChanged();
@@ -135,7 +138,7 @@ void PlaylistModel::addSong(const char* song) {
     mStatus.push_back(Status_Empty);
     endInsertRows();
     emit layoutChanged();
-    emit rowModified((int)rowCount()-1);
+    emit rowModified(row);
   }
 }
 
@@ -163,4 +166,42 @@ void ImageDelegate::paint(QPainter * painter, const QStyleOptionViewItem & optio
                 (newSize.width()-minD)/2, (newSize.height()-minD)/2);
     painter->drawPixmap(rect, mImages[i]);
   }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+FlatComboBox::FlatComboBox(QWidget *parent)
+  : Super(parent),
+    mArrowAlignment(Qt::AlignRight),
+    mFlat(true) {
+  setAutoFillBackground(true);
+  /*QPalette plt(palette());
+  plt.setColor(QPalette::Background, Qt::white);
+  setPalette(plt);*/
+}
+
+void FlatComboBox::paintEvent(QPaintEvent *e) {
+  if (flat()) {
+    QStylePainter painter(this);
+    painter.setPen(palette().color(QPalette::Text));
+    QStyleOptionComboBox opt;
+    initStyleOption(&opt);
+    QString displayText(opt.currentText);
+    opt.currentText = "";
+    painter.drawItemText(rect(), Qt::AlignCenter, palette(), true, displayText);
+    const QRect rcOld(opt.rect);
+    opt.rect = QStyle::alignedRect(Qt::LeftToRight, arrowAlignment(), QSize(16, rcOld.height()), rcOld);
+    painter.drawPrimitive(QStyle::PE_IndicatorArrowDown, opt);
+    opt.rect = rcOld;
+    painter.drawControl(QStyle::CE_ComboBoxLabel, opt);
+  } else {
+    Super::paintEvent(e);
+  }
+}
+
+void FlatComboBox::mousePressEvent(QMouseEvent *e) {
+  if (!isEditable() || !lineEdit()->rect().contains(e->pos())) {
+    emit aboutToPullDown();
+  }
+  Super::mousePressEvent(e);
 }

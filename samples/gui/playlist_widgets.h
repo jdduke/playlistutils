@@ -9,6 +9,7 @@
 
 #include <QAbstractItemDelegate>
 #include <QAbstractTableModel>
+#include <QComboBox>
 
 #include <PlaylistForward.h>
 
@@ -65,6 +66,32 @@ public:
   QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const;
 private:
   QVector<QPixmap> mImages;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+class FlatComboBox : public QComboBox {
+typedef QComboBox Super;
+Q_OBJECT
+
+public:
+  FlatComboBox(QWidget *parent = 0);
+  bool flat() const { return mFlat; }
+  void setFlat(bool flat) { mFlat = flat; }
+
+  Qt::Alignment arrowAlignment() const { return mArrowAlignment; }
+  void setArrowAlignment(Qt::Alignment a) { mArrowAlignment = a; }
+
+protected:
+  virtual void paintEvent(QPaintEvent *e);
+  virtual void mousePressEvent(QMouseEvent *e);
+
+signals:
+  void aboutToPullDown();
+
+private:
+  bool mFlat;
+  Qt::Alignment mArrowAlignment;
 };
 
 #endif
