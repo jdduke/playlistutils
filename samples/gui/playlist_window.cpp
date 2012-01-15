@@ -30,6 +30,7 @@ enum GuiStringKey {
   EXECUTE,
   CANCELLED,
   OK,
+  FAILED,
   ACTION,
   TITLE,
   NEW,
@@ -40,6 +41,7 @@ enum GuiStringKey {
   OPEN_DESTINATION,
   OP_LIST,
   BEHAVIOR_LIST,
+  SORT_LIST,
   STRING_COUNT
 };
 
@@ -51,6 +53,7 @@ static QString GuiStr[STRING_COUNT] = {
   QWidget::tr("Execute"),
   QWidget::tr("Cancelled"),
   QWidget::tr("OK"),
+  QWidget::tr("Failed"),
   QWidget::tr("Action"),
   QWidget::tr("Playlist Utilities"),
   QWidget::tr("New"),
@@ -59,8 +62,9 @@ static QString GuiStr[STRING_COUNT] = {
   QWidget::tr("Pause"),
   QWidget::tr("Open Playlist"),
   QWidget::tr("Open Destination"),
-  QString("Copy Songs;Move Songs;Delete Songs;Clear Songs"),
+  QString("Copy Songs;Move Songs;Delete Songs;Clear Songs;Sort Songs"),
   QString("Replace ;Replace Older  ;Skip  ;Ask   "),
+  QString("Path;Title;Artist;Size"),
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -73,6 +77,56 @@ static inline bool inRange(const T& val, const T& low, const T& high) {
 template<typename T>
 static inline bool bound(const T& val, const T& low, const T& high) {
   return std::max(low, std::min(val, high));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+template<class T>
+class TSongComparator : public pu::SongComparator {
+public:
+  TSongComparator(T comparator) : mComparator(comparator) { }
+  virtual bool operator()( const pu::Song& song1, const pu::Song& song2 ) const {
+    return mComparator(song1, song2);
+  }
+protected:
+  T mComparator;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+static pu::SongComparator songComparator(PlaylistWindow::PlaylistSort sort, bool bReverse = false) {
+  typedef std::function<bool(const pu::Song& s1, const pu::Song& s2)> CompareFunc;
+  typedef std::function<bool(int,int)> CompareI;
+  typedef std::function<bool(size_t,size_t)> CompareU;
+
+  CompareFunc func;
+  auto compI = bReverse ? CompareI(std::greater<int>())    : CompareI(std::less<int>());
+  auto compU = bReverse ? CompareU(std::greater<size_t>()) : CompareU(std::less<size_t>());
+
+  switch (sort) {
+  case PlaylistWindow::PlaylistSort_Path:
+    func = [=](const pu::Song& song1, const pu::Song& song2) {
+      return compI(std::strcmp( song1.path(), song2.path()), 0);
+    };
+    break;
+  case PlaylistWindow::PlaylistSort_Artist:
+    func = [=](const pu::Song& song1, const pu::Song& song2) {
+      return compI(std::strcmp( song1.artist(), song2.artist()), 0);
+    };
+    break;
+  case PlaylistWindow::PlaylistSort_Size:
+    func = [=](const pu::Song& song1, const pu::Song& song2) {
+      return compU(song1.size(), song2.size());
+    };
+    break;
+  case PlaylistWindow::PlaylistSort_Title:
+  default:
+    func = [=](const pu::Song& song1, const pu::Song& song2) {
+      return compI(std::strcmp(song1.title(), song2.title()), 0);
+    };
+  };
+
+  return TSongComparator<CompareFunc>(func);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -109,6 +163,7 @@ static QWidget* createOpsWidget(
   QWidget* parent,
   QComboBox** comboBox,
   QComboBox** behaviorComboBox,
+  QComboBox** sortComboBox,
   QPushButton** actionButton,
   QPushButton** closeButton,
   QPushButton** fileButton,
@@ -118,11 +173,11 @@ static QWidget* createOpsWidget(
   QProgressBar** opProgress,
   const char* ops,
   const char* behaviors,
+  const char* sorts,
   const char* executeOp,
   const char* closeOp,
   const char* fileOp,
   const char* opOp,
-  const char* behaviorOp,
   const char* refreshOp) {
 
   auto* widget              = new QWidget(parent);
@@ -142,6 +197,7 @@ static QWidget* createOpsWidget(
   *opProgress               = new QProgressBar(widget);
   *comboBox                 = new QComboBox(midWidget);
   *behaviorComboBox         = new FlatComboBox(topWidget);
+  *sortComboBox             = new QComboBox(midWidget);
 
   (*fileProgress)->setMinimum(0);
   (*opProgress)->setMinimum(0);
@@ -151,6 +207,8 @@ static QWidget* createOpsWidget(
   (*opButton)->setFlat(true);
   (*comboBox)->addItems( QString(ops).split(";",QString::SkipEmptyParts) );
   (*behaviorComboBox)->addItems( QString(behaviors).split(";",QString::SkipEmptyParts) );
+  (*sortComboBox)->addItems( QString(sorts).split(";",QString::SkipEmptyParts) );
+  (*sortComboBox)->setVisible(false);
 
   topLayout->addWidget(*fileButton);
   //topLayout->addSpacing(30);
@@ -187,7 +245,6 @@ static QWidget* createOpsWidget(
   QWidget::connect(*opButton,         SIGNAL(clicked()),                parentCallback, opOp);
   QWidget::connect(*closeButton,      SIGNAL(clicked()),                parentCallback, closeOp);
   QWidget::connect(*comboBox,         SIGNAL(currentIndexChanged(int)), parentCallback, refreshOp);
-  QWidget::connect(*behaviorComboBox, SIGNAL(currentIndexChanged(int)), parentCallback, behaviorOp);
 
   return widget;
 }
@@ -196,7 +253,6 @@ static QWidget* createOpsWidget(
 
 PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destPath)
   : mState(OpStates),
-    mFileBehavior(FileBehavior_Default),
     mOpMutex(new tthread::mutex),
     mOpCondition(new tthread::condition_variable) {
 
@@ -208,6 +264,7 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
                     this,
                     &mSongOperatorComboBox,
                     &mFileBehaviorComboBox,
+                    &mSortComboBox,
                     &mExecuteButton,
                     &mCloseButton,
                     &mFileButton,
@@ -217,11 +274,11 @@ PlaylistWindow::PlaylistWindow(const QString& playlistPath, const QString& destP
                     &mOpProgress,
                     GuiStr[OP_LIST].toLatin1(),
                     GuiStr[BEHAVIOR_LIST].toLatin1(),
+                    GuiStr[SORT_LIST].toLatin1(),
                     SLOT(executeSongOp()),
                     SLOT(closeSongOp()),
                     SLOT(openPlaylistOp()),
                     SLOT(openDestOp()),
-                    SLOT(refreshBehavior()),
                     SLOT(refreshState()));
 
   // Bottom View
@@ -308,32 +365,39 @@ void PlaylistWindow::executeSongOp() {
   if (mState == OpState_Paused) {
     setOpState(OpState_Executing);
   } else if (mState != OpState_Executing && mState != OpState_Invalid) {
-    auto executeOp = [this](void* data) {
-      pu::Playlist* playlist = this->mPlaylist.get();
-      if (playlist) {
-        size_t op = (size_t)data;
-        switch(op) {
-        case PlaylistSongOp_Move:
-          playlist->applyOp(pu::MoveSongOp(this->mDestinationPath.toLatin1()));
-          break;
-        case PlaylistSongOp_Delete:
-          playlist->applyOp(pu::DeleteSongOp());
-          break;
-        case PlaylistSongOp_Copy:
-          playlist->applyOp(pu::CopySongOp(this->mDestinationPath.toLatin1()));
-          break;
-        case PlaylistSongOp_Clear:
-          this->setOpProgress( (int)songCount() );
-          setPlaylist("");
-          break;
-        default:
-          break;
-        }
+    auto executeOp = [](void* data) {
+      auto* playlistWindow = static_cast<PlaylistWindow*>(data);
+      if (nullptr == playlistWindow) return;
+
+      auto* playlist = playlistWindow->playlist();
+      if (nullptr == playlist) return;
+
+      switch(playlistWindow->currentOp()) {
+      case PlaylistWindow::PlaylistOp_Move:
+        playlist->applyOp(pu::MoveSongOp(playlistWindow->selectedDestination()));
+        break;
+      case PlaylistWindow::PlaylistOp_Delete:
+        playlist->applyOp(pu::DeleteSongOp());
+        break;
+      case PlaylistWindow::PlaylistOp_Copy:
+        playlist->applyOp(pu::CopySongOp(playlistWindow->selectedDestination()));
+        break;
+      case PlaylistWindow::PlaylistOp_Clear:
+        playlistWindow->setOpProgress( (int)playlistWindow->songCount() );
+        playlistWindow->setPlaylist("");
+        break;
+      case PlaylistWindow::PlaylistOp_Sort:
+        playlist->apply(pu::SortSongsOp(songComparator(playlistWindow->selectedSort())));
+        playlistWindow->refreshPlaylist();
+        playlistWindow->setOpProgress( (int)playlistWindow->songCount() );
+        break;
+      default:
+        break;
       }
     };
     setOpState(OpState_Executing);
     clearOps();
-    mOpThread.reset( new tthread::thread(executeOp, (void*)currentOp()) );
+    mOpThread.reset( new tthread::thread(executeOp, (void*)this) );
   } else {
     setOpState(OpState_Paused);
   }
@@ -419,16 +483,20 @@ bool PlaylistWindow::beginOp(const char* opName) {
 }
 
 bool PlaylistWindow::endOp(bool success) {
-  auto listIndex           = mOpProgress->value();
-  auto playlistModelIndexI = mPlaylistModel->index( listIndex, PlaylistModel::Column_Image );
-  auto playlistModelIndexS = mPlaylistModel->index( listIndex, PlaylistModel::Column_Status );
-  mPlaylistModel->setData( playlistModelIndexI, success ? PlaylistModel::Status_Success : PlaylistModel::Status_Failure );
-  mPlaylistModel->setData( playlistModelIndexS, success ? GuiStr[OK] : GuiStr[ERROR] );
-  setOpProgress( std::min(listIndex + 1, mOpProgress->maximum()) );
-  auto sizeInMB = (double)mPlaylist->song(listIndex).size() / (1024*1024);
-  auto timeInS  = (double)setFileProgress( success ? mFileProgress->maximum() : 0 ) / 1000;
+  for (auto i = mOpProgress->value(); i < (int)songCount(); ++i) {
+    auto playlistModelIndexI = mPlaylistModel->index( i, PlaylistModel::Column_Image );
+    auto playlistModelIndexS = mPlaylistModel->index( i, PlaylistModel::Column_Status );
+    mPlaylistModel->setData( playlistModelIndexI, success ? PlaylistModel::Status_Success : PlaylistModel::Status_Failure );
+    mPlaylistModel->setData( playlistModelIndexS, success ? GuiStr[OK] : GuiStr[FAILED] );
+  }
+  if (songCount() > 0) {
+    mPlaylistView->scrollTo(mPlaylistModel->index(0, 0));
+  }
+
+  auto sizeInSongs = (double)mPlaylist->songCount();
+  auto timeInS     = (double)setFileProgress( success ? mFileProgress->maximum() : 0 ) / 1000;
   if (timeInS > 0.) {
-    mOpLabel->setText(QString::number(sizeInMB/timeInS, 'g', 4) + " MB/s");
+    mOpLabel->setText(QString::number(sizeInSongs/timeInS, 'g', 4) + " Songs/s");
   }
   return true;
 }
@@ -438,7 +506,7 @@ PlaylistWindow::OpState PlaylistWindow::currentState() const {
 }
 
 PlaylistWindow::PlaylistOp PlaylistWindow::currentOp() const {
-  return (PlaylistWindow::PlaylistOp)mSongOperatorComboBox->currentIndex();
+  return (PlaylistWindow::PlaylistOp)(PlaylistOp_First + mSongOperatorComboBox->currentIndex());
 }
 
 bool PlaylistWindow::readOnly() const {
@@ -481,12 +549,6 @@ QOpListener* PlaylistWindow::createOpListener() {
   );
 }
 
-void PlaylistWindow::refreshBehavior() {
-  if (inRange(mFileBehaviorComboBox->currentIndex(),(int)FileBehavior_First,(int)FileBehavior_Last)) {
-    mFileBehavior = (FileBehavior)mFileBehaviorComboBox->currentIndex();
-  }
-}
-
 void PlaylistWindow::refreshOpState() {
   mFileButton->setText(fileText());
   mOpButton->setText(opText());
@@ -496,6 +558,7 @@ void PlaylistWindow::refreshOpState() {
   bool ro = readOnly();
   mSongOperatorComboBox->setDisabled(ro);
   mFileBehaviorComboBox->setDisabled(ro);
+  mSortComboBox->setDisabled(ro);
   mFileButton->setDisabled(ro);
   mOpButton->setDisabled(ro);
 
@@ -538,22 +601,24 @@ void PlaylistWindow::refreshOpState() {
 }
 
 QString PlaylistWindow::opText() const {
-  switch(mSongOperatorComboBox->currentIndex()+PlaylistSongOp_First) {
-  case PlaylistSongOp_Move:
-  case PlaylistSongOp_Copy:
+  switch(currentOp()) {
+  case PlaylistOp_Move:
+  case PlaylistOp_Copy:
     return mDestinationPath.isEmpty() ? GuiStr[LOAD_DESTINATION] : mDestinationPath;
-  case PlaylistSongOp_Delete:
-  case PlaylistSongOp_Clear:
+  case PlaylistOp_Delete:
+  case PlaylistOp_Clear:
+  case PlaylistOp_Sort:
   default:
     return "";
   };
 }
 
 QString PlaylistWindow::fileText() const {
-  switch(mSongOperatorComboBox->currentIndex()+PlaylistSongOp_First) {
-  case PlaylistSongOp_Move:
-  case PlaylistSongOp_Copy:
-  case PlaylistSongOp_Delete:
+  switch(currentOp()) {
+  case PlaylistOp_Move:
+  case PlaylistOp_Copy:
+  case PlaylistOp_Delete:
+  case PlaylistOp_Sort:
     return mState == OpState_Executing ? mFileText :
       mPlaylistPath.isEmpty() ? GuiStr[LOAD_PLAYLIST] : mPlaylistPath;
   default:
@@ -581,6 +646,10 @@ void PlaylistWindow::setPlaylist(QString playlistPath) {
     mPlaylistPath = playlistPath;
     mPlaylist     = pu::playlistModule().createFromFile(mPlaylistPath.toLatin1());
   }
+  refreshPlaylist();
+}
+
+void PlaylistWindow::refreshPlaylist() {
   mPlaylistModel->setPlaylist( mPlaylist.get() );
   refreshState();
 }
@@ -631,16 +700,15 @@ void PlaylistWindow::refreshState() {
     return;
   }
 
-  int songOp = PlaylistSongOp_First + mSongOperatorComboBox->currentIndex();
+  PlaylistOp songOp = currentOp();
   switch( songOp ) {
-  case PlaylistSongOp_Move:
-  case PlaylistSongOp_Copy:
+  case PlaylistOp_Move:
+  case PlaylistOp_Copy:
     setOpState(songCount() > 0 && !mDestinationPath.isEmpty() ? OpState_Valid : OpState_Invalid);
     break;
-  case PlaylistSongOp_Delete:
-    setOpState(songCount() > 0 ? OpState_Valid : OpState_Invalid);
-    break;
-  case PlaylistSongOp_Clear:
+  case PlaylistOp_Delete:
+  case PlaylistOp_Clear:
+  case PlaylistOp_Sort:
     setOpState(songCount() > 0 ? OpState_Valid : OpState_Invalid);
     break;
   default:
@@ -681,6 +749,18 @@ const pu::Song* PlaylistWindow::selectedSong() const {
 
   const auto& song = mPlaylist->song((size_t)index.row());
   return song.empty() ? nullptr : &song;
+}
+
+PlaylistWindow::PlaylistOp PlaylistWindow::selectedOp() const {
+  return (PlaylistOp)mSongOperatorComboBox->currentIndex();
+}
+
+PlaylistWindow::PlaylistSort PlaylistWindow::selectedSort() const {
+  return (PlaylistSort)mSortComboBox->currentIndex();
+}
+
+PlaylistWindow::FileBehavior PlaylistWindow::selectedBehavior() const {
+  return (FileBehavior)mFileBehaviorComboBox->currentIndex();
 }
 
 int PlaylistWindow::setFileProgress( int value ) {

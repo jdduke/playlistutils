@@ -59,24 +59,28 @@ public:
   };
 
   enum PlaylistOp {
-    PlaylistSongOp_Copy = 0,
-    PlaylistSongOp_Move,
-    PlaylistSongOp_Delete,
-    PlaylistSongOp_Clear,
-    PlaylistOp_New,
+    PlaylistOp_Copy = 0,
     PlaylistOp_Move,
     PlaylistOp_Delete,
-    PlaylistOp_Copy,
-    PlaylistOp_Merge,
+    PlaylistOp_Clear,
     PlaylistOp_Sort,
     PlaylistOps,
 
-    PlaylistSongOp_First = PlaylistSongOp_Copy,
-    PlaylistSongOp_Last  = PlaylistSongOp_Clear,
-    PlaylistSongOp_Count = PlaylistSongOp_First - PlaylistSongOp_Last,
-    PlaylistOp_First     = PlaylistOp_New,
-    PlaylistOp_Last      = PlaylistOp_Sort,
-    PlaylistOp_Count     = PlaylistOp_First - PlaylistOp_Last,
+    PlaylistOp_Default = PlaylistOp_Copy,
+    PlaylistOp_First   = 0,
+    PlaylistOp_Last    = PlaylistOps - 1,
+  };
+
+  enum PlaylistSort {
+    PlaylistSort_Path = 0,
+    PlaylistSort_Title,
+    PlaylistSort_Artist,
+    PlaylistSort_Size,
+    PlaylistSorts,
+
+    PlaylistSort_Default = PlaylistSort_Path,
+    PlaylistSort_First   = 0,
+    PlaylistSort_Last    = PlaylistSorts - 1
   };
 
   enum FileBehavior {
@@ -87,13 +91,30 @@ public:
     FileBehaviors,
 
     FileBehavior_Default = FileBehavior_Skip,
-    FileBehavior_First   = FileBehavior_Replace,
-    FileBehavior_Last    = FileBehavior_Query
+    FileBehavior_First   = 0,
+    FileBehavior_Last    = FileBehaviors - 1
   };
 
   virtual void dragEnterEvent(QDragEnterEvent*);
   virtual void dropEvent(QDropEvent*);
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  void setPlaylist(QString playlistPath);
+  void setDestination(QString destinationPath);
+  int  setOpProgress(int value);
+  void refreshPlaylist();
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  const pu::Playlist* playlist() const { return mPlaylist.get(); }
+        pu::Playlist* playlist()       { return mPlaylist.get(); }
+
   const pu::Song* selectedSong() const;
+  PlaylistOp   selectedOp() const;
+  PlaylistSort selectedSort() const;
+  FileBehavior selectedBehavior() const;
+  const char*  selectedDestination() const { return mDestinationPath.toLatin1(); }
 
 signals:
   void cancelled();
@@ -104,7 +125,6 @@ signals:
 
 private slots:
   void refreshOpState();
-  void refreshBehavior();
   void refreshState();
   void setOpState(OpState);
   void executeSongOp();
@@ -120,11 +140,8 @@ private slots:
   void customContextMenu(const QPoint&);
 
 private:
-  void setPlaylist(QString playlistPath);
-  void setDestination(QString destinationPath);
 
   int setFileProgress(int value);
-  int setOpProgress(int value);
 
   size_t songCount() const;
 
@@ -143,6 +160,7 @@ private:
 
   QComboBox*      mSongOperatorComboBox;
   QComboBox*      mFileBehaviorComboBox;
+  QComboBox*      mSortComboBox;
   QPushButton*    mFileButton;
   QString         mFileText;
   QProgressBar*   mFileProgress;
