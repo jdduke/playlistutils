@@ -119,8 +119,8 @@ include_directories(common)
 
 add_subdirectory(pu)
 
-SET(BUILD_SAMPLES TRUE CACHE BOOL "Build samples")
-if(BUILD_SAMPLES)
+SET(BUILD_PLAYLIST_SAMPLES TRUE CACHE BOOL "Build samples")
+if(BUILD_PLAYLIST_SAMPLES)
   include_directories(externals)
   include_directories(externals/fpcpp)
   add_subdirectory(externals/ticpp)
