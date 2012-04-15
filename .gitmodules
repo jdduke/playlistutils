@@ -1,0 +1,6 @@
+[submodule "externals/fpcpp"]
+	path = externals/fpcpp
+	url = git://github.com/jdduke/fpcpp.git
+[submodule "externals/tthread"]
+	path = externals/tthread
+	url = git://github.com/jdduke/tthread.git
